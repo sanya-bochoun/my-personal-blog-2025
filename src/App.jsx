@@ -1,10 +1,15 @@
-import "./App.css";
+import "./App.css"
+import "./index.css"
+import NavBar from './components/NavBar'
+import HeroSection from './components/HeroSection'
+
 function App() {
   return (
     <>
-      <h1>App Page</h1>
+      <NavBar />
+      <HeroSection />
     </>
-  );
+  )
 }
 
-export default App;
+export default App
