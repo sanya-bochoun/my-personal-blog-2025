@@ -469,3 +469,38 @@ button:focus-visible {
     @apply bg-background text-foreground;
   }
 }
+
+/* Responsive Design for Mobile (375px) */
+@media only screen and (max-width: 375px) {
+  :root {
+    /* ปรับขนาด headline สำหรับหน้าจอมือถือ */
+    --headline-1-size: 32px;
+    --headline-1-line-height: 40px;
+    
+    --headline-2-size: 28px;
+    --headline-2-line-height: 36px;
+    
+    --headline-3-size: 20px;
+    --headline-3-line-height: 28px;
+    
+    --headline-4-size: 18px;
+    --headline-4-line-height: 24px;
+  }
+  
+  /* ปรับขนาดปุ่มสำหรับหน้าจอมือถือ */
+  .btn, .btn-primary, .btn-secondary {
+    height: 40px;
+    padding: 8px 24px;
+  }
+  
+  /* ปรับการจัดวางองค์ประกอบทั่วไป */
+  .container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  
+  /* ปรับระยะห่างระหว่างองค์ประกอบ */
+  .section {
+    margin-bottom: 24px;
+  }
+}
