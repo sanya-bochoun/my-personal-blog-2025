@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
-import logo from '../assets/logo.svg';
+import defaultLogo from '../assets/logo.svg';
 import { STYLES } from '../constants/styles';
 
-function NavBar() {
+function NavBar({
+  logo = defaultLogo,
+  loginText = "Log in",
+  signupText = "Sign up",
+  onLoginClick = () => {},
+  onSignupClick = () => {}
+}) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
@@ -61,13 +67,17 @@ function NavBar() {
             <button 
               type="button"
               className={STYLES.components.navbar.buttons.login.desktop}
+              onClick={onLoginClick}
             >
-              Log in
+              {loginText}
             </button>
             {/* signup-button -> Combined button styles */}
             {/* 'w-[143px] h-[48px] btn-primary text-sm font-medium flex items-center justify-center gap-[6px] py-3' */}
-            <button className={STYLES.components.navbar.buttons.signup.desktop}>
-              Sign up
+            <button 
+              className={STYLES.components.navbar.buttons.signup.desktop}
+              onClick={onSignupClick}
+            >
+              {signupText}
             </button>
           </div>
         </div>
@@ -84,13 +94,17 @@ function NavBar() {
             <button 
               type="button"
               className={STYLES.components.navbar.buttons.login.mobile}
+              onClick={onLoginClick}
             >
-              Log in
+              {loginText}
             </button>
             {/* mobile-signup-button -> Combined button styles */}
             {/* 'w-full h-[40px] btn-primary text-sm font-medium flex items-center justify-center gap-[6px] py-2 px-6' */}
-            <button className={STYLES.components.navbar.buttons.signup.mobile}>
-              Sign up
+            <button 
+              className={STYLES.components.navbar.buttons.signup.mobile}
+              onClick={onSignupClick}
+            >
+              {signupText}
             </button>
           </div>
         </div>
