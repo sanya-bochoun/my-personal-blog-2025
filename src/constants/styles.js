@@ -1,6 +1,3 @@
-<<<<<<< HEAD
- 
-=======
 export const STYLES = {
      // Layout styles - สำหรับการจัดวางโครงสร้างหลักของหน้าเว็บ
      layout: {
@@ -105,4 +102,3 @@ export const STYLES = {
           }
      }
 } 
->>>>>>> feature/resposive
