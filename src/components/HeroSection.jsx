@@ -75,6 +75,29 @@ function HeroSection() {
             </div>
 
             {/* Center Section - Image */}
+            <div className={`
+              hero-image-wrapper
+              flex items-center justify-center
+              w-full md:w-1/3
+              px-[16px]
+              md:px-0
+              mt-4 md:mt-[60px]                    /* เพิ่ม margin-top เท่ากับ section อื่น */
+            `}>
+              {/* hero-image-container -> Combined image styles */}
+              <div className={`
+                hero-image-container
+                relative bg-[#FFFFFF] rounded-2xl overflow-hidden
+                w-[343px] h-[470px]                 /* ขนาดสำหรับ mobile */
+                md:w-[386px] md:h-[529px]          /* ขนาดตาม spec 386x529 */
+              `}>
+                <img
+                  src={heroImage}
+                  alt="Hero"
+                  className="hero-image w-full h-full object-cover rounded-2xl"
+                />
+                <div className={STYLES.components.image.overlay}></div>
+              </div>
+            {/* Center Section - Image */}
             <div
               className={`
               hero-image-wrapper
