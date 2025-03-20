@@ -68,6 +68,44 @@ export const STYLES = {
                },
                overlay: 'absolute inset-0 bg-[#BEBBB1] opacity-25 rounded-2xl'
           },
+          // Article section component styles
+          article: {
+               wrapper: 'w-full bg-[#F8F7F6]',
+               container: 'w-full px-[24px] py-8 sm:px-8 lg:px-[120px]',
+               title: 'font-poppins font-semibold text-[#26231E] text-[24px] text-left leading-[32px] tracking-[0%] mb-8',
+               search: {
+                    mobile: {
+                         wrapper: 'md:hidden',
+                         input: {
+                              container: 'relative mb-6',
+                              field: 'w-full h-14 px-4 rounded-lg border border-input bg-background font-poppins font-medium text-[#75716B] text-[16px] leading-[24px] tracking-[0%] placeholder:text-[#75716B] placeholder:font-poppins placeholder:font-medium placeholder:text-[16px] placeholder:leading-[24px]',
+                              icon: 'absolute inset-y-0 right-4 flex items-center'
+                         },
+                         category: {
+                              container: 'mb-6 text-left',
+                              label: 'font-poppins font-medium text-[#75716B] text-[16px] leading-[24px] tracking-[0%] mb-2',
+                              select: {
+                                   wrapper: 'relative',
+                                   field: 'w-full h-14 px-4 rounded-lg border border-input bg-background appearance-none font-poppins font-medium text-[#75716B] text-[16px] leading-[24px]',
+                                   icon: 'absolute inset-y-0 right-4 flex items-center pointer-events-none'
+                              }
+                         }
+                    },
+                    desktop: {
+                         wrapper: 'hidden md:block',
+                         container: 'flex items-center justify-between h-[80px] bg-[#EFEEEB] pt-[16px] pr-[24px] pb-[16px] pl-[24px] rounded-[16px]',
+                         button: {
+                              active: 'px-4 py-2 bg-white rounded-md font-medium text-[#26231E] font-poppins text-[16px]',
+                              inactive: 'px-4 py-2 rounded-md font-medium text-[#75716B] font-poppins text-[16px]'
+                         },
+                         input: {
+                              container: 'relative ml-auto',
+                              field: 'w-[220px] h-10 pl-4 pr-10 rounded-md border border-white bg-white font-poppins font-medium text-[#75716B] text-[16px] leading-[24px] tracking-[0%] placeholder:text-[#75716B] placeholder:font-poppins placeholder:font-medium placeholder:text-[16px] placeholder:leading-[24px]',
+                              icon: 'absolute inset-y-0 right-3 flex items-center'
+                         }
+                    }
+               }
+          },
           // Navbar component styles
           navbar: {
                // โครงสร้างหลักของ navbar
