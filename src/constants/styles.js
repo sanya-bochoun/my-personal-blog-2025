@@ -40,6 +40,11 @@ export const STYLES = {
                base: 'font-poppins font-medium text-[#75716B]',
                size: 'text-[16px] leading-[24px]'
           },
+          body1: {
+               // สไตล์สำหรับ body/1 (ใช้ใน Footer)
+               base: 'font-poppins font-medium text-[#26231E]',
+               size: 'text-[16px] leading-[24px] tracking-[0%]'
+          },
           label: {
                // สไตล์สำหรับ label ต่างๆ
                base: 'font-poppins font-medium text-[#75716B] text-left',

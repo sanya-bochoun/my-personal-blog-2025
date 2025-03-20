@@ -1,8 +1,16 @@
 import React from "react";
-import heroImage from "../assets/16_9 img.png";
+import defaultHeroImage from "../assets/16_9 img.png";
 import { STYLES } from "../constants/styles";
 
-function HeroSection() {
+function HeroSection({
+  heroImage = defaultHeroImage,
+  title = "Stay Informed, Stay Inspired",
+  subtitle = "Discover a World of Knowledge at Your Fingertips. Your Daily Dose of Inspiration and Information.",
+  authorLabel = "-Author",
+  authorName = "Thompson P.",
+  authorBio = "I am a pet enthusiast and freelance writer who specializes in animal behavior and care. With a deep love for cats, I enjoy sharing insights on feline companionship and wellness.",
+  authorExtraBio = "When I'm not writing, I spend time volunteering at my local animal shelter, helping cats find loving homes.",
+}) {
   return (
     // hero-wrapper -> STYLES.layout.wrapper
     // 'flex flex-col justify-start items-center min-h-screen w-full'
@@ -51,9 +59,7 @@ function HeroSection() {
                     text-center md:text-right
                   `}
                   >
-                    Stay Informed,
-                    <br />
-                    Stay Inspired
+                    {title}
                   </h1>
                 </div>
                 <p
@@ -65,11 +71,7 @@ function HeroSection() {
                   text-center md:text-right
                 `}
                 >
-                  Discover a World of Knowledge at Your
-                  <br />
-                  Fingertips. Your Daily Dose of Inspiration
-                  <br />
-                  and Information.
+                  {subtitle}
                 </p>
               </div>
             </div>
@@ -131,7 +133,7 @@ function HeroSection() {
                     ${STYLES.typography.label.size}    /* text-[12px] leading-[20px] */
                   `}
                   >
-                    -Author
+                    {authorLabel}
                   </span>
                 </div>
                 {/* author-name -> Combined heading styles */}
@@ -144,7 +146,7 @@ function HeroSection() {
                   mb-3
                 `}
                 >
-                  Thompson P.
+                  {authorName}
                 </h3>
                 <div>
                   {/* author-bio -> Combined body text styles */}
@@ -156,9 +158,7 @@ function HeroSection() {
                     text-left
                   `}
                   >
-                    I am a pet enthusiast and freelance writer who specializes
-                    in animal behavior and care. With a deep love for cats, I
-                    enjoy sharing insights on feline companionship and wellness.
+                    {authorBio}
                   </p>
                   <p
                     className={`
@@ -169,8 +169,7 @@ function HeroSection() {
                     mt-4
                   `}
                   >
-                    When I'm not writing, I spend time volunteering at my local
-                    animal shelter, helping cats find loving homes.
+                    {authorExtraBio}
                   </p>
                 </div>
               </div>
