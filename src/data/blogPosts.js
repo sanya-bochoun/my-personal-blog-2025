@@ -44,7 +44,7 @@ export const blogPosts = [
   {
     id: 4,
     image:
-      "https://res.cloudinary.com/dcbpjtd1r/image/upload/v1728449771/my-blog-post/e0haxst38li4g8i0vpsr.jpg",
+      "https://plus.unsplash.com/premium_photo-1677101221533-52b45823a2dc?q=80&w=2071&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     category: "General",
     title: "The Future of Work: Adapting to a Digital-First Economy",
     description:

@@ -12,12 +12,28 @@ function BlogCard({
 }) {
   return (
     <article className={cn("blog-card", "flex flex-col gap-4")}>
-      <a href="#" className={cn("blog-image-link", "relative h-[212px] sm:h-[360px]")}>
+      <a href="#" className={cn(
+        "blog-image-link",
+        "relative h-[212px] sm:h-[360px]",
+        "overflow-hidden rounded-md",
+        "group"
+      )}>
         <img 
-          className={cn("blog-image", "w-full h-full object-cover rounded-md")} 
+          className={cn(
+            "blog-image",
+            "w-full h-full object-cover",
+            "transition-transform duration-300 ease-in-out",
+            "group-hover:scale-110",
+            "group-hover:opacity-90"
+          )}
           src={image} 
           alt={title}
         />
+        <div className={cn(
+          "absolute inset-0",
+          "bg-black/0 transition-colors duration-300",
+          "group-hover:bg-black/20"
+        )} />
       </a>
       <div className={cn("blog-content", "flex flex-col")}>
         <div className="category-wrapper flex">
