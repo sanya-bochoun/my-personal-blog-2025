@@ -1,6 +1,8 @@
 import React from 'react';
 import { STYLES } from '../constants/styles';
 import { cn } from "@/lib/utils";
+import { blogPosts } from '../data/blogPosts';
+import BlogCard from './BlogCard';
 
 const ArticleSection = () => {
   return (
@@ -70,6 +72,25 @@ const ArticleSection = () => {
               </div>
             </div>
           </nav>
+
+          {/* Blog Posts Grid */}
+          <div className={cn(
+            "blog-posts-grid",
+            "grid grid-cols-1 md:grid-cols-2 gap-8",
+            "mt-8"
+          )}>
+            {blogPosts.map((post) => (
+              <BlogCard
+                key={post.id}
+                image={post.image}
+                category={post.category}
+                title={post.title}
+                description={post.description}
+                author={post.author}
+                date={post.date}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </section>
