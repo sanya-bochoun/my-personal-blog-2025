@@ -1,10 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { STYLES } from '../constants/styles';
 import { cn } from "@/lib/utils";
 import { blogPosts } from '../data/blogPosts';
 import BlogCard from './BlogCard';
 
+const categories = ["Highlight", "Cat", "Inspiration", "General"];
+
 const ArticleSection = () => {
+  const navigate = useNavigate();
+  const [selectedCategory, setSelectedCategory] = useState('Highlight');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const handleArticleClick = (id) => {
+    navigate(`/article/${id}`);
+  };
+
+  const filteredPosts = blogPosts.filter(post => {
+    const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         post.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'Highlight' || post.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
   return (
     <section className={cn("article-section", STYLES.layout.wrapper, "w-full bg-[#F8F7F6]")}>
       <div className={cn("article-container", `${STYLES.layout.container.mobile} ${STYLES.layout.container.desktop}`)}>
@@ -18,6 +36,8 @@ const ArticleSection = () => {
               <input
                 type="text"
                 placeholder="Search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className={cn("search-mobile-input", STYLES.components.article.search.mobile.input.field)}
               />
               <div className={cn("search-mobile-icon", STYLES.components.article.search.mobile.input.icon)}>
@@ -32,12 +52,13 @@ const ArticleSection = () => {
               <p className={cn("category-mobile-label", STYLES.components.article.search.mobile.category.label)}>Category</p>
               <div className={cn("category-mobile-select-wrapper", STYLES.components.article.search.mobile.category.select.wrapper)}>
                 <select 
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
                   className={cn("category-mobile-select", STYLES.components.article.search.mobile.category.select.field)}
                 >
-                  <option value="highlight">Highlight</option>
-                  <option value="cat">Cat</option>
-                  <option value="inspiration">Inspiration</option>
-                  <option value="general">General</option>
+                  {categories.map((category) => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
                 </select>
                 <div className={cn("category-mobile-select-icon", STYLES.components.article.search.mobile.category.select.icon)}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -52,16 +73,28 @@ const ArticleSection = () => {
           <nav className={cn("search-desktop", STYLES.components.article.search.desktop.wrapper)}>
             <div className={cn("search-desktop-container", STYLES.components.article.search.desktop.container)}>
               <div className="category-buttons">
-                <button className={cn("category-button active", STYLES.components.article.search.desktop.button.active)}>Highlight</button>
-                <button className={cn("category-button", STYLES.components.article.search.desktop.button.inactive)}>Cat</button>
-                <button className={cn("category-button", STYLES.components.article.search.desktop.button.inactive)}>Inspiration</button>
-                <button className={cn("category-button", STYLES.components.article.search.desktop.button.inactive)}>General</button>
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={cn(
+                      "category-button",
+                      selectedCategory === category
+                        ? STYLES.components.article.search.desktop.button.active
+                        : STYLES.components.article.search.desktop.button.inactive
+                    )}
+                  >
+                    {category}
+                  </button>
+                ))}
               </div>
               
               <div className={cn("search-desktop-input-container", STYLES.components.article.search.desktop.input.container)}>
                 <input
                   type="text"
                   placeholder="Search"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className={cn("search-desktop-input", STYLES.components.article.search.desktop.input.field)}
                 />
                 <div className={cn("search-desktop-icon", STYLES.components.article.search.desktop.input.icon)}>
@@ -79,15 +112,17 @@ const ArticleSection = () => {
             "grid grid-cols-1 md:grid-cols-2 gap-8",
             "mt-8"
           )}>
-            {blogPosts.map((post) => (
+            {filteredPosts.map((post) => (
               <BlogCard
                 key={post.id}
+                id={post.id}
                 image={post.image}
                 category={post.category}
                 title={post.title}
                 description={post.description}
                 author={post.author}
                 date={post.date}
+                onClick={handleArticleClick}
               />
             ))}
           </div>
