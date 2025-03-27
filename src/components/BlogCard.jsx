@@ -70,7 +70,7 @@ function BlogCard({
         </a>
         <p className={cn(
           "blog-description",
-          "text-muted-foreground text-sm mb-4 flex-grow line-clamp-3"
+          "text-start text-muted-foreground text-sm mb-4 flex-grow line-clamp-3"
         )}>
           {description}
         </p>
