@@ -5,7 +5,8 @@ import NavBar from './components/NavBar'
 import HeroSection from './components/HeroSection'
 import ArticleSection from './components/ArticleSection'
 import Footer from './components/Footer'
-import ArticlePage from './pages/ArticlePage'
+import BlogPost from './pages/BlogPost'
+import NotFound from './pages/NotFound'
 
 function App() {
   return (
@@ -19,7 +20,8 @@ function App() {
               <ArticleSection />
             </>
           } />
-          <Route path="/article/:id" element={<ArticlePage />} />
+          <Route path="/article/:id" element={<BlogPost />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
         <Footer />
       </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { STYLES } from '../constants/styles';
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 import BlogCard from './BlogCard';
 import { fetchPosts } from '../services/api';
 import { formatDate } from '../utils/date';

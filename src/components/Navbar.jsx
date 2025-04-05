@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import logo from '../assets/logo.svg';
 import { STYLES } from '../constants/styles';
 
@@ -21,15 +22,13 @@ function NavBar() {
           ${STYLES.components.navbar.container.padding} /* px-[24px] sm:px-8 lg:px-[120px] */
         `}>
           {/* Logo Section */}
-          {/* logo-wrapper -> 'flex items-center' */}
-          <div className={STYLES.components.navbar.logo.wrapper}>
-            {/* logo-image -> 'w-[24px] h-[24px] sm:w-[44px] sm:h-[44px]' */}
+          <Link to="/" className={STYLES.components.navbar.logo.wrapper}>
             <img 
               src={logo} 
               alt="logo" 
               className={STYLES.components.navbar.logo.image}
             />
-          </div>
+          </Link>
           
           {/* Mobile Menu Button */}
           {/* mobile-menu -> 'block sm:hidden focus:outline-none' */}
