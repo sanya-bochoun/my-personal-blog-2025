@@ -357,4 +357,297 @@ const refreshToken = async (req, res) => {
     res.status(500).json({ message: 'Server error during token refresh' });
   }
 };
-``` 
+```
+
+## Validate Middleware
+
+Middleware สำหรับตรวจสอบและตรวจความถูกต้องของข้อมูลที่ส่งมาจากผู้ใช้ โดยใช้ express-validator
+
+```javascript
+const { body, validationResult, param, query } = require('express-validator');
+
+// ฟังก์ชันสำหรับตรวจสอบผลการตรวจสอบข้อมูล
+const validate = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ 
+      status: 'error',
+      errors: errors.array().map(err => ({
+        field: err.path,
+        message: err.msg
+      }))
+    });
+  }
+  next();
+};
+```
+
+### กฎการตรวจสอบที่มีให้ใช้งาน
+
+#### 1. การลงทะเบียน (registerRules)
+
+```javascript
+const registerRules = [
+  body('username')
+    .trim()
+    .notEmpty().withMessage('กรุณาระบุชื่อผู้ใช้')
+    .isLength({ min: 3, max: 30 }).withMessage('ชื่อผู้ใช้ต้องมีความยาว 3-30 ตัวอักษร')
+    .matches(/^[a-zA-Z0-9_]+$/).withMessage('ชื่อผู้ใช้ต้องประกอบด้วยตัวอักษร ตัวเลข หรือ _ เท่านั้น'),
+  
+  body('email')
+    .trim()
+    .notEmpty().withMessage('กรุณาระบุอีเมล')
+    .isEmail().withMessage('รูปแบบอีเมลไม่ถูกต้อง')
+    .normalizeEmail(),
+  
+  body('password')
+    .notEmpty().withMessage('กรุณาระบุรหัสผ่าน')
+    .isLength({ min: 8 }).withMessage('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('รหัสผ่านต้องประกอบด้วยตัวพิมพ์เล็ก ตัวพิมพ์ใหญ่ และตัวเลขอย่างน้อย 1 ตัว'),
+  
+  body('full_name')
+    .optional()
+    .trim()
+    .isLength({ max: 100 }).withMessage('ชื่อต้องมีความยาวไม่เกิน 100 ตัวอักษร'),
+];
+```
+
+#### 2. การเข้าสู่ระบบ (loginRules)
+
+```javascript
+const loginRules = [
+  body('email')
+    .trim()
+    .notEmpty().withMessage('กรุณาระบุอีเมล')
+    .isEmail().withMessage('รูปแบบอีเมลไม่ถูกต้อง'),
+  
+  body('password')
+    .notEmpty().withMessage('กรุณาระบุรหัสผ่าน')
+];
+```
+
+#### 3. การอัปเดตโปรไฟล์ (updateProfileRules)
+
+```javascript
+const updateProfileRules = [
+  body('full_name')
+    .optional()
+    .trim()
+    .isLength({ max: 100 }).withMessage('ชื่อต้องมีความยาวไม่เกิน 100 ตัวอักษร'),
+  
+  body('bio')
+    .optional()
+    .trim()
+    .isLength({ max: 500 }).withMessage('ประวัติต้องมีความยาวไม่เกิน 500 ตัวอักษร'),
+  
+  body('avatar_url')
+    .optional()
+    .trim()
+    .isURL().withMessage('URL รูปโปรไฟล์ไม่ถูกต้อง')
+];
+```
+
+#### 4. การเปลี่ยนรหัสผ่าน (changePasswordRules)
+
+```javascript
+const changePasswordRules = [
+  body('current_password')
+    .notEmpty().withMessage('กรุณาระบุรหัสผ่านปัจจุบัน'),
+  
+  body('new_password')
+    .notEmpty().withMessage('กรุณาระบุรหัสผ่านใหม่')
+    .isLength({ min: 8 }).withMessage('รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('รหัสผ่านใหม่ต้องประกอบด้วยตัวพิมพ์เล็ก ตัวพิมพ์ใหญ่ และตัวเลขอย่างน้อย 1 ตัว')
+];
+```
+
+#### 5. การรีเฟรช Token (refreshTokenRules)
+
+```javascript
+const refreshTokenRules = [
+  body('refreshToken')
+    .notEmpty().withMessage('กรุณาระบุ refresh token')
+];
+```
+
+### การใช้งาน Validate Middleware
+
+```javascript
+// ตัวอย่างการใช้งาน
+const { registerRules, validate } = require('../middleware/validateMiddleware');
+const authController = require('../controllers/authController');
+
+router.post('/register', registerRules, validate, authController.register);
+```
+
+## Auth Middleware
+
+Middleware สำหรับการตรวจสอบการยืนยันตัวตนและสิทธิ์การเข้าถึง
+
+### 1. การตรวจสอบ JWT Token (authenticateToken)
+
+```javascript
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // รูปแบบ: Bearer TOKEN
+  
+  if (!token) {
+    return res.status(401).json({ 
+      status: 'error',
+      message: 'กรุณาเข้าสู่ระบบก่อนใช้งาน' 
+    });
+  }
+  
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.userId = decoded.userId;
+    next();
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ 
+        status: 'error',
+        message: 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่',
+        code: 'TOKEN_EXPIRED'
+      });
+    }
+    
+    return res.status(403).json({ 
+      status: 'error',
+      message: 'ไม่มีสิทธิ์เข้าถึง' 
+    });
+  }
+};
+```
+
+### 2. การตรวจสอบบทบาทของผู้ใช้ (checkRole)
+
+```javascript
+const checkRole = (roles) => {
+  return async (req, res, next) => {
+    try {
+      // ตรวจสอบว่ามี userId จาก authenticateToken middleware
+      if (!req.userId) {
+        return res.status(401).json({ 
+          status: 'error',
+          message: 'กรุณาเข้าสู่ระบบก่อนใช้งาน' 
+        });
+      }
+      
+      // ดึงข้อมูลผู้ใช้จากฐานข้อมูล
+      const db = require('../config/db');
+      const result = await db.query('SELECT role FROM users WHERE id = $1', [req.userId]);
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ 
+          status: 'error',
+          message: 'ไม่พบข้อมูลผู้ใช้' 
+        });
+      }
+      
+      const userRole = result.rows[0].role;
+      
+      // ตรวจสอบว่าผู้ใช้มีบทบาทที่อนุญาตหรือไม่
+      if (!roles.includes(userRole)) {
+        return res.status(403).json({ 
+          status: 'error',
+          message: 'คุณไม่มีสิทธิ์ในการดำเนินการนี้' 
+        });
+      }
+      
+      // เก็บบทบาทของผู้ใช้ในตัวแปร req เพื่อใช้ในขั้นตอนต่อไป
+      req.userRole = userRole;
+      next();
+    } catch (error) {
+      console.error('Role checking error:', error.message);
+      return res.status(500).json({ 
+        status: 'error',
+        message: 'เกิดข้อผิดพลาดในการตรวจสอบสิทธิ์' 
+      });
+    }
+  };
+};
+```
+
+### 3. การตรวจสอบความเป็นเจ้าของข้อมูล (checkOwnership)
+
+```javascript
+const checkOwnership = (paramName, tableName, ownerField) => {
+  return async (req, res, next) => {
+    try {
+      // ตรวจสอบว่ามี userId จาก authenticateToken middleware
+      if (!req.userId) {
+        return res.status(401).json({ 
+          status: 'error',
+          message: 'กรุณาเข้าสู่ระบบก่อนใช้งาน' 
+        });
+      }
+      
+      const itemId = req.params[paramName];
+      
+      if (!itemId) {
+        return res.status(400).json({ 
+          status: 'error',
+          message: 'ID ไม่ถูกต้อง' 
+        });
+      }
+      
+      // ตรวจสอบจากฐานข้อมูล
+      const db = require('../config/db');
+      const query = `SELECT ${ownerField} FROM ${tableName} WHERE id = $1`;
+      const result = await db.query(query, [itemId]);
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ 
+          status: 'error',
+          message: 'ไม่พบข้อมูล' 
+        });
+      }
+      
+      const ownerId = result.rows[0][ownerField];
+      
+      // ถ้าผู้ใช้ไม่ใช่เจ้าของและไม่ใช่ admin
+      if (ownerId !== req.userId && req.userRole !== 'admin') {
+        return res.status(403).json({ 
+          status: 'error',
+          message: 'คุณไม่มีสิทธิ์ในการดำเนินการนี้' 
+        });
+      }
+      
+      next();
+    } catch (error) {
+      console.error('Ownership checking error:', error.message);
+      return res.status(500).json({ 
+        status: 'error',
+        message: 'เกิดข้อผิดพลาดในการตรวจสอบสิทธิ์' 
+      });
+    }
+  };
+};
+```
+
+### ตัวอย่างการใช้งาน Auth Middleware
+
+```javascript
+const { authenticateToken, checkRole, checkOwnership } = require('../middleware/authMiddleware');
+
+// ตรวจสอบการเข้าสู่ระบบ
+router.get('/profile', authenticateToken, userController.getProfile);
+
+// ตรวจสอบบทบาท
+router.delete('/users/:id', authenticateToken, checkRole(['admin']), userController.deleteUser);
+
+// ตรวจสอบความเป็นเจ้าของ
+router.put('/posts/:id', 
+  authenticateToken, 
+  checkOwnership('id', 'posts', 'user_id'), 
+  postController.updatePost
+);
+```
+
+### ประโยชน์ของระบบตรวจสอบข้อมูลและสิทธิ์การเข้าถึง
+
+1. **รักษาคุณภาพข้อมูล** - ตรวจสอบข้อมูลให้ถูกต้องก่อนบันทึกลงฐานข้อมูล
+2. **ป้องกันการโจมตี** - ป้องกัน SQL Injection, XSS และการโจมตีอื่นๆ
+3. **ประสบการณ์ผู้ใช้ที่ดีขึ้น** - แสดงข้อความผิดพลาดที่ชัดเจนเพื่อให้ผู้ใช้แก้ไขได้อย่างถูกต้อง
+4. **ความปลอดภัยของระบบ** - ตรวจสอบสิทธิ์การเข้าถึงเพื่อป้องกันการเข้าถึงข้อมูลโดยไม่ได้รับอนุญาต
+5. **การจัดการข้อมูลที่ดีขึ้น** - มั่นใจว่าการดำเนินการกับข้อมูลทำโดยบุคคลที่ได้รับอนุญาตเท่านั้น 
