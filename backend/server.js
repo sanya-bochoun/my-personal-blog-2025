@@ -7,6 +7,8 @@ const xss = require('xss-clean');
 require('dotenv').config();
 
 const db = require('./config/db');
+const routes = require('./routes');  // เพิ่มเข้ามา
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -44,6 +46,9 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+
+// Routes
+app.use('/api', routes);  // เพิ่มเข้ามา
 
 // Test route
 app.get('/', (req, res) => {
@@ -85,8 +90,8 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Handle 404 routes
-app.use('*', (req, res) => {
+// Handle 404 routes - แก้ไขจาก '*' เป็น เส้นทางที่ชัดเจน
+app.use((req, res) => {
   res.status(404).json({
     status: 'fail',
     message: `Can't find ${req.originalUrl} on this server!`
@@ -95,5 +100,14 @@ app.use('*', (req, res) => {
 
 // เริ่มต้น server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+  console.log(`✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨
+🌈 🚀 Server is running successfully! 🚀 🌈
+🔹 Port: ${PORT}
+🔹 Status: Online and ready!
+🔹 URLs: http://localhost:${PORT} / http://127.0.0.1:${PORT}
+🔹 API: http://localhost:${PORT}/api
+🔹 Health Check: http://localhost:${PORT}/api/health
+🔹 Time: ${new Date().toLocaleString()}
+🌟 Happy coding! 💻 ✨
+✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨`);
 }); 
