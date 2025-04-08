@@ -1,109 +1,90 @@
-# โครงสร้างโปรเจค Backend
+# โครงสร้างโปรเจค Blog API
 
-เอกสารนี้อธิบายโครงสร้างโฟลเดอร์และไฟล์ของโปรเจค backend สำหรับระบบ authentication
+คู่มือนี้อธิบายโครงสร้างไฟล์และโฟลเดอร์ของโปรเจค Blog API
 
-## โครงสร้างโฟลเดอร์
+## โครงสร้างไดเรกทอรี
 
 ```
-/backend
-  /config         # การตั้งค่าต่างๆ
-  /controllers    # ตรรกะของแอพพลิเคชัน
-  /middleware     # middleware functions
-  /routes         # API endpoints
-  /utils          # ฟังก์ชันช่วยเหลือ
-  /docs           # เอกสาร
-  .env            # ตัวแปรสภาพแวดล้อม
-  server.js       # จุดเริ่มต้นของแอพพลิเคชัน
-  package.json    # รายการ dependencies
+backend/
+├── config/             # ไฟล์การตั้งค่าต่างๆ
+│   └── db.js           # การเชื่อมต่อฐานข้อมูล
+├── controllers/        # ตัวควบคุมสำหรับจัดการ business logic
+├── docs/               # เอกสารโปรเจค
+├── middleware/         # middleware สำหรับการประมวลผลคำขอ
+│   ├── authMiddleware.js    # middleware สำหรับการยืนยันตัวตน
+│   └── validateMiddleware.js # middleware สำหรับการตรวจสอบข้อมูล
+├── migrations/         # ไฟล์สำหรับการสร้างและอัปเดตฐานข้อมูล
+│   ├── 01_create_tables.sql      # สร้างตารางพื้นฐาน
+│   └── 02_create_blog_tables.sql # สร้างตารางสำหรับบทความ
+├── routes/             # เส้นทาง API
+├── utils/              # ฟังก์ชันยูทิลิตี้
+│   ├── dbMigrate.js    # เครื่องมือสำหรับรัน migrations
+│   └── errorHandler.js # ตัวจัดการข้อผิดพลาด
+├── .env                # ไฟล์ตัวแปรสภาพแวดล้อม (ไม่รวมใน Git)
+├── .env.example        # ตัวอย่างไฟล์ตัวแปรสภาพแวดล้อม
+├── package.json        # รายการ dependencies และ scripts
+└── server.js           # จุดเริ่มต้นของแอปพลิเคชัน
 ```
 
-## คำอธิบายโฟลเดอร์
+## กลุ่มไฟล์หลัก
 
-### /config
+### 1. การตั้งค่า (Config)
 
-เก็บไฟล์การตั้งค่าต่างๆ:
-- `db.js`: การเชื่อมต่อกับฐานข้อมูล PostgreSQL
-- `config.js`: ตัวแปรคงที่และการตั้งค่าอื่นๆ
+- **db.js**: ใช้สำหรับการเชื่อมต่อกับฐานข้อมูล PostgreSQL
 
-### /controllers
+### 2. Controllers
 
-เก็บตรรกะหลักของแอพพลิเคชัน (business logic):
-- `authController.js`: ตรรกะสำหรับ authentication (register, login, logout, ฯลฯ)
-- `userController.js`: ตรรกะสำหรับจัดการผู้ใช้ (อัปเดตโปรไฟล์, เปลี่ยนรหัสผ่าน, ฯลฯ)
+ไฟล์ที่ควรมีในโฟลเดอร์นี้:
+- **authController.js**: จัดการการลงทะเบียน, เข้าสู่ระบบ, ออกจากระบบ และรีเฟรชโทเคน
+- **postController.js**: จัดการบทความ (สร้าง, อ่าน, อัปเดต, ลบ)
+- **userController.js**: จัดการข้อมูลผู้ใช้
+- **commentController.js**: จัดการความคิดเห็น
 
-### /middleware
+### 3. Middleware
 
-เก็บ middleware สำหรับการประมวลผลคำขอ HTTP:
-- `authMiddleware.js`: middleware สำหรับตรวจสอบ JWT token
-- `validateMiddleware.js`: middleware สำหรับตรวจสอบข้อมูลที่ส่งมา
+- **authMiddleware.js**: ตรวจสอบการยืนยันตัวตนและสิทธิ์การเข้าถึง
+  - `authenticateToken`: ตรวจสอบ JWT token
+  - `checkRole`: ตรวจสอบบทบาทของผู้ใช้
+  - `checkOwnership`: ตรวจสอบความเป็นเจ้าของข้อมูล
 
-### /routes
+- **validateMiddleware.js**: ตรวจสอบความถูกต้องของข้อมูลที่ส่งเข้ามา
+  - `validate`: ตรวจสอบผลลัพธ์ validation
+  - `registerRules`: กฎสำหรับการลงทะเบียน
+  - `loginRules`: กฎสำหรับการเข้าสู่ระบบ
+  - `refreshTokenRules`: กฎสำหรับการรีเฟรช token
 
-เก็บการกำหนดเส้นทางของ API:
-- `authRoutes.js`: เส้นทางสำหรับการยืนยันตัวตน
-- `userRoutes.js`: เส้นทางสำหรับการจัดการผู้ใช้
+### 4. Migrations
 
-### /utils
+- **01_create_tables.sql**: สร้างตารางพื้นฐานของระบบ (users, refresh_tokens, ฯลฯ)
+- **02_create_blog_tables.sql**: สร้างตารางสำหรับบทความและความคิดเห็น
 
-เก็บฟังก์ชันช่วยเหลือที่ใช้ในหลายส่วนของแอพพลิเคชัน:
-- `jwtUtils.js`: ฟังก์ชันสำหรับจัดการ JWT
-- `passwordUtils.js`: ฟังก์ชันสำหรับจัดการรหัสผ่าน
-- `validationUtils.js`: ฟังก์ชันสำหรับตรวจสอบข้อมูล
+### 5. Routes
 
-### /docs
+ไฟล์ที่ควรมีในโฟลเดอร์นี้:
+- **index.js**: รวมเส้นทาง API ทั้งหมด
+- **authRoutes.js**: เส้นทางสำหรับการยืนยันตัวตน
+- **postRoutes.js**: เส้นทางสำหรับบทความ
+- **userRoutes.js**: เส้นทางสำหรับผู้ใช้
+- **commentRoutes.js**: เส้นทางสำหรับความคิดเห็น
 
-เก็บเอกสารสำหรับโปรเจค:
-- `database_design.md`: ออกแบบโครงสร้างฐานข้อมูล
-- `api_endpoints.md`: รายละเอียด API endpoints
-- `project_structure.md`: อธิบายโครงสร้างโปรเจค
+### 6. Utils
 
-## ไฟล์หลัก
+- **dbMigrate.js**: เครื่องมือสำหรับรัน migrations ของฐานข้อมูล
+- **errorHandler.js**: ตัวจัดการข้อผิดพลาดสำหรับใช้ในแอปพลิเคชัน
+  - `catchAsync`: จับ error ใน async functions
+  - `AppError`: คลาสสำหรับสร้าง error ที่กำหนดเอง
 
-### server.js
+## การเริ่มต้นใช้งาน
 
-จุดเริ่มต้นของแอพพลิเคชัน Express:
-- ตั้งค่า middleware (express.json, cors, ฯลฯ)
-- เชื่อมต่อกับฐานข้อมูล
-- กำหนดเส้นทาง API
-- เริ่มต้น server ที่พอร์ตที่กำหนด
+1. สร้างไฟล์ `.env` จาก `.env.example`
+2. สร้างฐานข้อมูล PostgreSQL ชื่อ `my_blog_db`
+3. รัน migrations: `npm run migrate`
+4. เริ่มต้นเซิร์ฟเวอร์: `npm run dev`
 
-### .env
+## เอกสารเพิ่มเติม
 
-ไฟล์เก็บค่าตัวแปรสภาพแวดล้อม:
-- การเชื่อมต่อกับฐานข้อมูล
-- พอร์ตของเซิร์ฟเวอร์
-- คีย์ลับสำหรับ JWT
-- การตั้งค่า CORS
-
-### package.json
-
-รายการ dependencies และ scripts:
-- `npm start`: รันเซิร์ฟเวอร์
-- `npm run dev`: รันเซิร์ฟเวอร์ในโหมดพัฒนา (ด้วย nodemon)
-
-## Flow การทำงาน
-
-1. คำขอ HTTP เข้ามาที่ `server.js`
-2. ผ่าน middleware ที่เกี่ยวข้อง (auth, validation, ฯลฯ)
-3. ถูกส่งไปยัง route ที่เหมาะสม
-4. Route เรียกใช้ controller
-5. Controller ทำงานกับฐานข้อมูลและจัดการตรรกะทางธุรกิจ
-6. ส่งผลลัพธ์กลับไปยังผู้ใช้
-
-## การติดตั้งและรัน
-
-การติดตั้ง dependencies:
-```bash
-cd backend
-npm install
-```
-
-การรันในโหมดพัฒนา:
-```bash
-npm run dev
-```
-
-การรันในโหมดการผลิต:
-```bash
-npm start
-``` 
+สำหรับรายละเอียดเพิ่มเติม โปรดดูไฟล์เอกสารอื่นๆ:
+- **middleware_guide.md**: รายละเอียดเกี่ยวกับ middleware ทั้งหมด
+- **setup_guide.md**: คำแนะนำในการตั้งค่าโปรเจค
+- **api_endpoints.md**: เอกสารอธิบาย API endpoints
+- **database_design.md**: โครงสร้างฐานข้อมูล 

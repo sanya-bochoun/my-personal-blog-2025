@@ -2,22 +2,22 @@ const { Pool } = require('pg');
 require('dotenv').config();
 
 const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  database: process.env.DB_NAME,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD
+  host: process.env.DB_HOST || 'localhost',
+  port: process.env.DB_PORT || 5432,
+  database: process.env.DB_NAME || 'my_blog_db',
+  user: process.env.DB_USER || 'postgres',
+  password: process.env.DB_PASSWORD || 'admin'
 });
 
-// ฟังก์ชันทดสอบการเชื่อมต่อ
+// ฟังก์ชันสำหรับทดสอบการเชื่อมต่อกับฐานข้อมูล
 const testConnection = async () => {
   try {
     const client = await pool.connect();
-    console.log('Database connected successfully');
+    console.log('✅ เชื่อมต่อกับฐานข้อมูลสำเร็จ!');
     client.release();
     return true;
   } catch (error) {
-    console.error('Database connection error:', error.message);
+    console.error('❌ ไม่สามารถเชื่อมต่อกับฐานข้อมูล:', error.message);
     return false;
   }
 };
