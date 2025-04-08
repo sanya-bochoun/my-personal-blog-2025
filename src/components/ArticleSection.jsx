@@ -1,27 +1,79 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { STYLES } from '../constants/styles';
 import { cn } from "../lib/utils";
 import BlogCard from './BlogCard';
+import SearchDropdown from './ui/SearchDropdown';
 import { fetchPosts } from '../services/api';
 import { formatDate } from '../utils/date';
+import axios from 'axios';
 
 const categories = ["Highlight", "Cat", "Inspiration", "General"];
 
 const LOADING_DELAY = 1000; // 1 second delay
+const BASE_URL = 'https://blog-post-project-api.vercel.app';
 
 const ArticleSection = () => {
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState('Highlight');
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState(null);
+  const searchRef = useRef(null);
+  const searchMobileRef = useRef(null);
+  
+  // ผสาน click outside effect
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        (searchRef.current && !searchRef.current.contains(event.target)) &&
+        (searchMobileRef.current && !searchMobileRef.current.contains(event.target))
+      ) {
+        setShowSearchResults(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleArticleClick = (id) => {
     navigate(`/article/${id}`);
+    setShowSearchResults(false);
+    setSearchTerm('');
+  };
+
+  const fetchSearchResults = async (query) => {
+    if (!query || query.length < 1) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const response = await axios.get(`${BASE_URL}/posts`, {
+        params: {
+          keyword: query,
+          limit: 5 // จำกัดผลลัพธ์ให้แสดงแค่ 5 รายการ
+        }
+      });
+      
+      setSearchResults(response.data.posts);
+      setShowSearchResults(true);
+    } catch (err) {
+      console.error('Error searching posts:', err);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const loadPosts = async (page) => {
@@ -68,6 +120,25 @@ const ArticleSection = () => {
     loadPosts(1);
   }, [selectedCategory, searchTerm]);
 
+  // สำหรับการค้นหาแบบ real-time
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      fetchSearchResults(searchTerm);
+    }, 300);
+
+    return () => clearTimeout(delayDebounce);
+  }, [searchTerm]);
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleSearchFocus = () => {
+    if (searchTerm.length >= 1) {
+      setShowSearchResults(true);
+    }
+  };
+
   const handleLoadMore = () => {
     const nextPage = currentPage + 1;
     setCurrentPage(nextPage);
@@ -83,19 +154,40 @@ const ArticleSection = () => {
           {/* Mobile View */}
           <div className={cn("search-mobile", STYLES.components.article.search.mobile.wrapper)}>
             {/* Search Input */}
-            <div className={cn("search-mobile-input-container", STYLES.components.article.search.mobile.input.container)}>
-              <input
-                type="text"
-                placeholder="Search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className={cn("search-mobile-input", STYLES.components.article.search.mobile.input.field)}
-              />
-              <div className={cn("search-mobile-icon", STYLES.components.article.search.mobile.input.icon)}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+            <div ref={searchMobileRef} className={cn("search-mobile-input-container", STYLES.components.article.search.mobile.input.container, "relative")}>
+              <div className="relative flex items-center w-full">
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  onFocus={handleSearchFocus}
+                  className="w-full h-12 pl-4 pr-12 rounded-full bg-white border border-gray-200 focus:outline-none"
+                />
+                <div className="absolute right-4 flex items-center justify-center">
+                  {isSearching ? (
+                    <div className="animate-spin h-5 w-5 border-2 border-gray-500 rounded-full border-t-transparent"></div>
+                  ) : (
+                    <svg 
+                      width="24" 
+                      height="24" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="text-[#75716B] hover:text-gray-900 transition-colors duration-200 cursor-pointer"
+                    >
+                      <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </div>
               </div>
+              
+              {/* Search Dropdown for Mobile */}
+              <SearchDropdown 
+                results={searchResults}
+                isVisible={showSearchResults}
+                onSelect={handleArticleClick}
+              />
             </div>
             
             {/* Category Dropdown */}
@@ -122,7 +214,7 @@ const ArticleSection = () => {
           
           {/* Desktop View */}
           <nav className={cn("search-desktop", STYLES.components.article.search.desktop.wrapper)}>
-            <div className={cn("search-desktop-container", STYLES.components.article.search.desktop.container)}>
+            <div className={cn("search-desktop-container", STYLES.components.article.search.desktop.container, "flex justify-between items-center")}>
               <div className="category-buttons">
                 {categories.map((category) => (
                   <button
@@ -140,19 +232,40 @@ const ArticleSection = () => {
                 ))}
               </div>
               
-              <div className={cn("search-desktop-input-container", STYLES.components.article.search.desktop.input.container)}>
-                <input
-                  type="text"
-                  placeholder="Search"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className={cn("search-desktop-input", STYLES.components.article.search.desktop.input.field)}
-                />
-                <div className={cn("search-desktop-icon", STYLES.components.article.search.desktop.input.icon)}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+              <div ref={searchRef} className={cn("search-desktop-input-container", STYLES.components.article.search.desktop.input.container, "relative w-full md:w-[350px] lg:w-[400px] xl:w-[450px]")}>
+                <div className="relative flex items-center w-full">
+                  <input
+                    type="text"
+                    placeholder="Search"
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    onFocus={handleSearchFocus}
+                    className="w-full h-12 pl-4 pr-12 rounded-full bg-white border border-gray-200 focus:outline-none"
+                  />
+                  <div className="absolute right-4 flex items-center justify-center">
+                    {isSearching ? (
+                      <div className="animate-spin h-5 w-5 border-2 border-gray-500 rounded-full border-t-transparent"></div>
+                    ) : (
+                      <svg 
+                        width="24" 
+                        height="24" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="text-[#75716B] hover:text-gray-900 transition-colors duration-200 cursor-pointer"
+                      >
+                        <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </div>
                 </div>
+                
+                {/* Search Dropdown for Desktop */}
+                <SearchDropdown 
+                  results={searchResults}
+                  isVisible={showSearchResults}
+                  onSelect={handleArticleClick}
+                />
               </div>
             </div>
           </nav>

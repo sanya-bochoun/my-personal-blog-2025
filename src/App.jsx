@@ -7,6 +7,7 @@ import ArticleSection from './components/ArticleSection'
 import Footer from './components/Footer'
 import BlogPost from './pages/BlogPost'
 import NotFound from './pages/NotFound'
+import BackToTopButton from './components/BackToTopButton'
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Footer />
+        <BackToTopButton />
       </div>
     </Router>
   )

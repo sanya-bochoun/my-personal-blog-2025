@@ -4,6 +4,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { format } from 'date-fns';
 import { cn } from "@/lib/utils";
+import SocialShareBanner from '@/components/SocialShareBanner';
+import CommentSection from '@/components/CommentSection';
 
 function BlogPost() {
   const { id } = useParams();
@@ -106,10 +108,49 @@ function BlogPost() {
               {post.content}
             </ReactMarkdown>
           </div>
+
+          {/* Author Info for Mobile */}
+          <div className="block lg:hidden mt-8 mb-8">
+            <aside className="bg-gray-50 p-6 rounded-xl">
+              <div className="flex items-start gap-4 mb-4">
+                <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200">
+                  <img 
+                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author}`}
+                    alt={post.author}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1 text-left">Author</h3>
+                  <p className="text-lg font-medium text-gray-800 text-left">{post.author}</p>
+                </div>
+              </div>
+              <div className="prose prose-sm text-left">
+                <p className="text-gray-600">
+                  I am a pet enthusiast and freelance writer who specializes in animal behavior and care. 
+                  With a deep love for cats, I enjoy sharing insights on feline companionship and wellness.
+                </p>
+                <p className="mt-4 text-gray-600">
+                  When I'm not writing, I spend time volunteering at my local animal shelter, helping cats find loving homes.
+                </p>
+              </div>
+            </aside>
+          </div>
+
+          {/* Social Share Banner */}
+          <div className="mt-8 mb-8">
+            <SocialShareBanner 
+              likes={post.likes || 321} 
+              url={window.location.href} 
+            />
+          </div>
+
+          {/* Comments */}
+          <CommentSection />
         </div>
 
-        {/* Author Sidebar */}
-        <aside className="bg-gray-50 p-6 rounded-xl h-fit sticky top-24">
+        {/* Author Sidebar for Desktop */}
+        <aside className="hidden lg:block bg-gray-50 p-6 rounded-xl h-fit sticky top-24">
           <div className="flex items-start gap-4 mb-4">
             <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200">
               <img 
@@ -119,11 +160,11 @@ function BlogPost() {
               />
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900 mb-1">Author</h3>
-              <p className="text-lg font-medium text-gray-800">{post.author}</p>
+              <h3 className="font-semibold text-gray-900 mb-1 text-left">Author</h3>
+              <p className="text-lg font-medium text-gray-800 text-left">{post.author}</p>
             </div>
           </div>
-          <div className="prose prose-sm">
+          <div className="prose prose-sm text-left">
             <p className="text-gray-600">
               I am a pet enthusiast and freelance writer who specializes in animal behavior and care. 
               With a deep love for cats, I enjoy sharing insights on feline companionship and wellness.
