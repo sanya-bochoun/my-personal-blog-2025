@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import { format } from 'date-fns';
 import { cn } from "@/lib/utils";
 import SocialShareBanner from '@/components/SocialShareBanner';
+import CommentSection from '@/components/CommentSection';
 
 function BlogPost() {
   const { id } = useParams();
@@ -137,12 +138,15 @@ function BlogPost() {
           </div>
 
           {/* Social Share Banner */}
-          <div className="mt-8 mb-16">
+          <div className="mt-8 mb-8">
             <SocialShareBanner 
               likes={post.likes || 321} 
               url={window.location.href} 
             />
           </div>
+
+          {/* Comments */}
+          <CommentSection />
         </div>
 
         {/* Author Sidebar for Desktop */}
