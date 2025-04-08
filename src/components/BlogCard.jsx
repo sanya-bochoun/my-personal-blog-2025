@@ -2,6 +2,7 @@ import React from 'react';
 import { cn } from "@/lib/utils";
 
 function BlogCard({
+  id,
   image,
   category,
   title,
@@ -9,15 +10,26 @@ function BlogCard({
   author,
   authorImage,
   date,
+  onClick,
 }) {
+  const handleClick = (e) => {
+    e.preventDefault();
+    onClick?.(id);
+  };
+
   return (
     <article className={cn("blog-card", "flex flex-col gap-4")}>
-      <a href="#" className={cn(
-        "blog-image-link",
-        "relative h-[212px] sm:h-[360px]",
-        "overflow-hidden rounded-md",
-        "group"
-      )}>
+      <a 
+        href={`/article/${id}`} 
+        onClick={handleClick}
+        className={cn(
+          "blog-image-link",
+          "relative h-[212px] sm:h-[360px]",
+          "overflow-hidden rounded-md",
+          "group",
+          "cursor-pointer"
+        )}
+      >
         <img 
           className={cn(
             "blog-image",
@@ -44,7 +56,11 @@ function BlogCard({
             {category}
           </span>
         </div>
-        <a href="#" >
+        <a 
+          href={`/article/${id}`}
+          onClick={handleClick}
+          className="cursor-pointer"
+        >
           <h2 className={cn(
             "blog-title",
             "text-start font-bold text-xl mb-2 line-clamp-2 hover:underline"
@@ -54,7 +70,7 @@ function BlogCard({
         </a>
         <p className={cn(
           "blog-description",
-          "text-muted-foreground text-sm mb-4 flex-grow line-clamp-3"
+          "text-start text-muted-foreground text-sm mb-4 flex-grow line-clamp-3"
         )}>
           {description}
         </p>

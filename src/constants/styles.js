@@ -118,7 +118,7 @@ export const STYLES = {
                // Logo styles
                logo: {
                     wrapper: 'flex items-center',
-                    image: 'w-[24px] h-[24px] sm:w-[44px] sm:h-[44px]' // ขนาดโลโก้ที่แตกต่างกัน
+                    image: 'w-[32px] h-[32px] sm:w-[44px] sm:h-[44px]' // ขนาดโลโก้ที่แตกต่างกัน
                },
                // Menu styles (mobile และ desktop)
                menu: {
