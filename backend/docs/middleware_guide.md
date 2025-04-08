@@ -12,6 +12,7 @@
 6. [Logging (Morgan)](#logging-morgan)
 7. [Error Handling](#error-handling)
 8. [Authentication Middleware](#authentication-middleware)
+9. [Refresh Token Middleware](#refresh-token-middleware)
 
 ## Helmet
 
@@ -324,39 +325,68 @@ app.delete('/api/users/:id',
 
 ```javascript
 const refreshToken = async (req, res) => {
-  const { refreshToken } = req.body;
-  
-  if (!refreshToken) {
-    return res.status(400).json({ message: 'Refresh token is required' });
-  }
-  
   try {
+    const { refreshToken: token } = req.body;
+
     // ตรวจสอบว่า refresh token มีอยู่ในฐานข้อมูลหรือไม่
-    const tokenRecord = await RefreshToken.findOne({ 
-      where: { 
-        token: refreshToken,
-        expires_at: { [Op.gt]: new Date() }
-      } 
-    });
-    
-    if (!tokenRecord) {
-      return res.status(403).json({ message: 'Invalid or expired refresh token' });
+    const tokenResult = await db.query(
+      `SELECT user_id, expires_at
+       FROM refresh_tokens
+       WHERE token = $1 AND expires_at > NOW()`,
+      [token]
+    );
+
+    if (tokenResult.rows.length === 0) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Refresh token ไม่ถูกต้องหรือหมดอายุ'
+      });
     }
-    
-    const userId = tokenRecord.user_id;
-    
+
+    const userId = tokenResult.rows[0].user_id;
+
     // สร้าง access token ใหม่
-    const newAccessToken = jwt.sign(
-      { userId }, 
-      process.env.JWT_SECRET, 
+    const accessToken = jwt.sign(
+      { userId },
+      process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN }
     );
-    
-    res.json({ accessToken: newAccessToken });
+
+    res.json({
+      status: 'success',
+      data: {
+        accessToken
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error during token refresh' });
+    console.error('Refresh token error:', error.message);
+    res.status(500).json({
+      status: 'error',
+      message: 'เกิดข้อผิดพลาดในการรีเฟรช token'
+    });
   }
 };
+```
+
+การใช้งาน refresh token ในแอปพลิเคชันทำงานดังนี้:
+
+1. เมื่อผู้ใช้เข้าสู่ระบบ (login) จะได้รับ access token และ refresh token
+2. เมื่อ access token หมดอายุ ไคลเอนต์ส่ง refresh token ไปยังเอนด์พอยท์ `/auth/refresh-token`
+3. เซิร์ฟเวอร์ตรวจสอบ refresh token ในฐานข้อมูล แล้วสร้าง access token ใหม่
+
+กฎการตรวจสอบความถูกต้องของ refresh token (validation):
+
+```javascript
+const refreshTokenRules = [
+  body('refreshToken')
+    .notEmpty().withMessage('กรุณาระบุ refresh token')
+];
+```
+
+เอนด์พอยท์สำหรับ refresh token:
+
+```javascript
+router.post('/refresh-token', refreshTokenRules, validate, authController.refreshToken);
 ```
 
 ## Validate Middleware
@@ -380,13 +410,8 @@ const validate = (req, res, next) => {
   }
   next();
 };
-```
 
-### กฎการตรวจสอบที่มีให้ใช้งาน
-
-#### 1. การลงทะเบียน (registerRules)
-
-```javascript
+// กฎการตรวจสอบการลงทะเบียน (ตัวอย่าง)
 const registerRules = [
   body('username')
     .trim()
@@ -403,65 +428,13 @@ const registerRules = [
   body('password')
     .notEmpty().withMessage('กรุณาระบุรหัสผ่าน')
     .isLength({ min: 8 }).withMessage('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('รหัสผ่านต้องประกอบด้วยตัวพิมพ์เล็ก ตัวพิมพ์ใหญ่ และตัวเลขอย่างน้อย 1 ตัว'),
-  
-  body('full_name')
-    .optional()
-    .trim()
-    .isLength({ max: 100 }).withMessage('ชื่อต้องมีความยาวไม่เกิน 100 ตัวอักษร'),
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('รหัสผ่านต้องประกอบด้วยตัวพิมพ์เล็ก ตัวพิมพ์ใหญ่ และตัวเลขอย่างน้อย 1 ตัว')
 ];
 ```
 
-#### 2. การเข้าสู่ระบบ (loginRules)
+### กฎการตรวจสอบสำหรับ Refresh Token
 
-```javascript
-const loginRules = [
-  body('email')
-    .trim()
-    .notEmpty().withMessage('กรุณาระบุอีเมล')
-    .isEmail().withMessage('รูปแบบอีเมลไม่ถูกต้อง'),
-  
-  body('password')
-    .notEmpty().withMessage('กรุณาระบุรหัสผ่าน')
-];
-```
-
-#### 3. การอัปเดตโปรไฟล์ (updateProfileRules)
-
-```javascript
-const updateProfileRules = [
-  body('full_name')
-    .optional()
-    .trim()
-    .isLength({ max: 100 }).withMessage('ชื่อต้องมีความยาวไม่เกิน 100 ตัวอักษร'),
-  
-  body('bio')
-    .optional()
-    .trim()
-    .isLength({ max: 500 }).withMessage('ประวัติต้องมีความยาวไม่เกิน 500 ตัวอักษร'),
-  
-  body('avatar_url')
-    .optional()
-    .trim()
-    .isURL().withMessage('URL รูปโปรไฟล์ไม่ถูกต้อง')
-];
-```
-
-#### 4. การเปลี่ยนรหัสผ่าน (changePasswordRules)
-
-```javascript
-const changePasswordRules = [
-  body('current_password')
-    .notEmpty().withMessage('กรุณาระบุรหัสผ่านปัจจุบัน'),
-  
-  body('new_password')
-    .notEmpty().withMessage('กรุณาระบุรหัสผ่านใหม่')
-    .isLength({ min: 8 }).withMessage('รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('รหัสผ่านใหม่ต้องประกอบด้วยตัวพิมพ์เล็ก ตัวพิมพ์ใหญ่ และตัวเลขอย่างน้อย 1 ตัว')
-];
-```
-
-#### 5. การรีเฟรช Token (refreshTokenRules)
+การตรวจสอบความถูกต้องของ refresh token เป็นส่วนสำคัญของการรักษาความปลอดภัยในการจัดการ token ต่างๆ:
 
 ```javascript
 const refreshTokenRules = [
@@ -470,184 +443,115 @@ const refreshTokenRules = [
 ];
 ```
 
-### การใช้งาน Validate Middleware
+## Refresh Token Middleware
+
+### การใช้งาน Refresh Token
+
+Refresh Token เป็นกลไกที่ใช้เพื่อต่ออายุ Access Token เมื่อหมดอายุโดยไม่ต้องให้ผู้ใช้เข้าสู่ระบบใหม่ 
+ระบบของเราใช้ Refresh Token ตามขั้นตอนดังนี้:
+
+1. เมื่อผู้ใช้เข้าสู่ระบบ จะได้รับทั้ง Access Token และ Refresh Token
+2. Access Token จะมีอายุการใช้งานสั้น (เช่น 15 นาที)
+3. Refresh Token จะมีอายุการใช้งานยาวกว่า (เช่น 7 วัน)
+4. เมื่อ Access Token หมดอายุ ผู้ใช้สามารถใช้ Refresh Token เพื่อขอ Access Token ใหม่ได้
+
+### การตรวจสอบความถูกต้องของ Refresh Token
+
+ไฟล์ `validateMiddleware.js` มีการตรวจสอบความถูกต้องของ Refresh Token ดังนี้:
 
 ```javascript
-// ตัวอย่างการใช้งาน
-const { registerRules, validate } = require('../middleware/validateMiddleware');
-const authController = require('../controllers/authController');
-
-router.post('/register', registerRules, validate, authController.register);
+/**
+ * กฎสำหรับตรวจสอบการรีเฟรช token
+ */
+const refreshTokenRules = [
+  body('refreshToken')
+    .notEmpty().withMessage('กรุณาระบุ refresh token')
+];
 ```
 
-## Auth Middleware
+### การใช้งาน Refresh Token ในเส้นทาง (Routes)
 
-Middleware สำหรับการตรวจสอบการยืนยันตัวตนและสิทธิ์การเข้าถึง
-
-### 1. การตรวจสอบ JWT Token (authenticateToken)
+เราได้กำหนดเส้นทางสำหรับการรีเฟรช token ใน `authRoutes.js`:
 
 ```javascript
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // รูปแบบ: Bearer TOKEN
-  
-  if (!token) {
-    return res.status(401).json({ 
-      status: 'error',
-      message: 'กรุณาเข้าสู่ระบบก่อนใช้งาน' 
-    });
-  }
-  
+router.post('/refresh-token', refreshTokenRules, validate, authController.refreshToken);
+```
+
+### การดำเนินการ Refresh Token
+
+ใน `authController.js` เราดำเนินการกับ Refresh Token ดังนี้:
+
+```javascript
+/**
+ * รีเฟรช token
+ */
+const refreshToken = async (req, res) => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decoded.userId;
-    next();
-  } catch (error) {
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ 
+    const { refreshToken: token } = req.body;
+
+    // ตรวจสอบว่า refresh token มีอยู่ในฐานข้อมูลหรือไม่
+    const tokenResult = await db.query(
+      `SELECT user_id, expires_at
+       FROM refresh_tokens
+       WHERE token = $1 AND expires_at > NOW()`,
+      [token]
+    );
+
+    if (tokenResult.rows.length === 0) {
+      return res.status(401).json({
         status: 'error',
-        message: 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่',
-        code: 'TOKEN_EXPIRED'
+        message: 'Refresh token ไม่ถูกต้องหรือหมดอายุ'
       });
     }
-    
-    return res.status(403).json({ 
+
+    const userId = tokenResult.rows[0].user_id;
+
+    // สร้าง access token ใหม่
+    const accessToken = jwt.sign(
+      { userId },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
+
+    res.json({
+      status: 'success',
+      data: {
+        accessToken
+      }
+    });
+  } catch (error) {
+    console.error('Refresh token error:', error.message);
+    res.status(500).json({
       status: 'error',
-      message: 'ไม่มีสิทธิ์เข้าถึง' 
+      message: 'เกิดข้อผิดพลาดในการรีเฟรช token'
     });
   }
 };
 ```
 
-### 2. การตรวจสอบบทบาทของผู้ใช้ (checkRole)
+### แนวทางการใช้งาน Refresh Token ในแอปพลิเคชัน
 
-```javascript
-const checkRole = (roles) => {
-  return async (req, res, next) => {
-    try {
-      // ตรวจสอบว่ามี userId จาก authenticateToken middleware
-      if (!req.userId) {
-        return res.status(401).json({ 
-          status: 'error',
-          message: 'กรุณาเข้าสู่ระบบก่อนใช้งาน' 
-        });
-      }
-      
-      // ดึงข้อมูลผู้ใช้จากฐานข้อมูล
-      const db = require('../config/db');
-      const result = await db.query('SELECT role FROM users WHERE id = $1', [req.userId]);
-      
-      if (result.rows.length === 0) {
-        return res.status(404).json({ 
-          status: 'error',
-          message: 'ไม่พบข้อมูลผู้ใช้' 
-        });
-      }
-      
-      const userRole = result.rows[0].role;
-      
-      // ตรวจสอบว่าผู้ใช้มีบทบาทที่อนุญาตหรือไม่
-      if (!roles.includes(userRole)) {
-        return res.status(403).json({ 
-          status: 'error',
-          message: 'คุณไม่มีสิทธิ์ในการดำเนินการนี้' 
-        });
-      }
-      
-      // เก็บบทบาทของผู้ใช้ในตัวแปร req เพื่อใช้ในขั้นตอนต่อไป
-      req.userRole = userRole;
-      next();
-    } catch (error) {
-      console.error('Role checking error:', error.message);
-      return res.status(500).json({ 
-        status: 'error',
-        message: 'เกิดข้อผิดพลาดในการตรวจสอบสิทธิ์' 
-      });
-    }
-  };
-};
-```
+1. **ฝั่งไคลเอนต์**:
+   - เก็บ Access Token ใน memory หรือ state ของแอปพลิเคชัน
+   - เก็บ Refresh Token ใน HttpOnly cookie หรือ secure storage
+   - เมื่อได้รับข้อผิดพลาด 401 (Unauthorized) ให้ส่งคำขอไปยังเส้นทาง `/refresh-token`
+   - หากได้รับ Access Token ใหม่ ให้ใช้ Token นั้นส่งคำขอเดิมอีกครั้ง
+   - หากการรีเฟรชล้มเหลว ให้นำผู้ใช้กลับไปยังหน้าเข้าสู่ระบบ
 
-### 3. การตรวจสอบความเป็นเจ้าของข้อมูล (checkOwnership)
+2. **ฝั่งเซิร์ฟเวอร์**:
+   - ตรวจสอบความถูกต้องของ Refresh Token ในฐานข้อมูล
+   - ตรวจสอบว่า Token ยังไม่หมดอายุ
+   - สร้าง Access Token ใหม่และส่งกลับให้ผู้ใช้
+   - ในบางกรณี อาจสร้าง Refresh Token ใหม่ด้วย (token rotation) เพื่อเพิ่มความปลอดภัย
 
-```javascript
-const checkOwnership = (paramName, tableName, ownerField) => {
-  return async (req, res, next) => {
-    try {
-      // ตรวจสอบว่ามี userId จาก authenticateToken middleware
-      if (!req.userId) {
-        return res.status(401).json({ 
-          status: 'error',
-          message: 'กรุณาเข้าสู่ระบบก่อนใช้งาน' 
-        });
-      }
-      
-      const itemId = req.params[paramName];
-      
-      if (!itemId) {
-        return res.status(400).json({ 
-          status: 'error',
-          message: 'ID ไม่ถูกต้อง' 
-        });
-      }
-      
-      // ตรวจสอบจากฐานข้อมูล
-      const db = require('../config/db');
-      const query = `SELECT ${ownerField} FROM ${tableName} WHERE id = $1`;
-      const result = await db.query(query, [itemId]);
-      
-      if (result.rows.length === 0) {
-        return res.status(404).json({ 
-          status: 'error',
-          message: 'ไม่พบข้อมูล' 
-        });
-      }
-      
-      const ownerId = result.rows[0][ownerField];
-      
-      // ถ้าผู้ใช้ไม่ใช่เจ้าของและไม่ใช่ admin
-      if (ownerId !== req.userId && req.userRole !== 'admin') {
-        return res.status(403).json({ 
-          status: 'error',
-          message: 'คุณไม่มีสิทธิ์ในการดำเนินการนี้' 
-        });
-      }
-      
-      next();
-    } catch (error) {
-      console.error('Ownership checking error:', error.message);
-      return res.status(500).json({ 
-        status: 'error',
-        message: 'เกิดข้อผิดพลาดในการตรวจสอบสิทธิ์' 
-      });
-    }
-  };
-};
-```
+### ความปลอดภัยของ Refresh Token
 
-### ตัวอย่างการใช้งาน Auth Middleware
+1. **เก็บในฐานข้อมูล**: เราเก็บ Refresh Token ในฐานข้อมูลพร้อมกับวันหมดอายุและ user_id
+2. **การยกเลิกเมื่อออกจากระบบ**: เมื่อผู้ใช้ออกจากระบบ เราจะลบ Refresh Token ออกจากฐานข้อมูล
+3. **การหมดอายุ**: กำหนดเวลาหมดอายุสำหรับ Refresh Token (เช่น 7 วัน)
+4. **ไม่เปิดเผยในการส่งข้อมูล**: ใช้ HTTPS สำหรับทุกการสื่อสารที่มี Token
 
-```javascript
-const { authenticateToken, checkRole, checkOwnership } = require('../middleware/authMiddleware');
+โดยการใช้ Refresh Token อย่างเหมาะสม จะช่วยเพิ่มความปลอดภัยให้กับระบบการยืนยันตัวตนของแอปพลิเคชัน
+โดยจำกัดช่วงเวลาของการเข้าถึงและลดความเสี่ยงจากการขโมย Token
 
-// ตรวจสอบการเข้าสู่ระบบ
-router.get('/profile', authenticateToken, userController.getProfile);
-
-// ตรวจสอบบทบาท
-router.delete('/users/:id', authenticateToken, checkRole(['admin']), userController.deleteUser);
-
-// ตรวจสอบความเป็นเจ้าของ
-router.put('/posts/:id', 
-  authenticateToken, 
-  checkOwnership('id', 'posts', 'user_id'), 
-  postController.updatePost
-);
-```
-
-### ประโยชน์ของระบบตรวจสอบข้อมูลและสิทธิ์การเข้าถึง
-
-1. **รักษาคุณภาพข้อมูล** - ตรวจสอบข้อมูลให้ถูกต้องก่อนบันทึกลงฐานข้อมูล
-2. **ป้องกันการโจมตี** - ป้องกัน SQL Injection, XSS และการโจมตีอื่นๆ
-3. **ประสบการณ์ผู้ใช้ที่ดีขึ้น** - แสดงข้อความผิดพลาดที่ชัดเจนเพื่อให้ผู้ใช้แก้ไขได้อย่างถูกต้อง
-4. **ความปลอดภัยของระบบ** - ตรวจสอบสิทธิ์การเข้าถึงเพื่อป้องกันการเข้าถึงข้อมูลโดยไม่ได้รับอนุญาต
-5. **การจัดการข้อมูลที่ดีขึ้น** - มั่นใจว่าการดำเนินการกับข้อมูลทำโดยบุคคลที่ได้รับอนุญาตเท่านั้น 
+// ... existing code ...

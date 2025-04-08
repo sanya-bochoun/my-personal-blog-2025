@@ -1,206 +1,174 @@
-# คู่มือการติดตั้งและใช้งาน Backend API
+# คู่มือการติดตั้งและใช้งาน Blog API
 
-คู่มือนี้อธิบายวิธีการติดตั้ง การตั้งค่า และการใช้งาน Backend API สำหรับโปรเจค My Personal Blog
-
-## สารบัญ
-
-1. [ความต้องการของระบบ](#ความต้องการของระบบ)
-2. [การติดตั้ง](#การติดตั้ง)
-3. [การตั้งค่า](#การตั้งค่า)
-4. [การสร้างฐานข้อมูล](#การสร้างฐานข้อมูล)
-5. [การรันเซิร์ฟเวอร์](#การรันเซิร์ฟเวอร์)
-6. [โครงสร้าง API](#โครงสร้าง-api)
-7. [Middleware ที่ใช้](#middleware-ที่ใช้)
-8. [การแก้ไขปัญหา](#การแก้ไขปัญหา)
+คู่มือนี้จะแนะนำวิธีการติดตั้งและรันแอปพลิเคชัน Blog API
 
 ## ความต้องการของระบบ
 
-- Node.js (เวอร์ชัน 14.x ขึ้นไป)
-- npm (เวอร์ชัน 6.x ขึ้นไป)
-- PostgreSQL (เวอร์ชัน 12.x ขึ้นไป)
+- Node.js (v16 หรือใหม่กว่า)
+- npm (v7 หรือใหม่กว่า)
+- PostgreSQL (v12 หรือใหม่กว่า)
 
 ## การติดตั้ง
 
-1. Clone โปรเจคจาก repository:
-   ```bash
-   git clone <repository-url>
-   cd my-personal-blog-2025
-   ```
+### 1. โคลนโปรเจค
 
-2. ติดตั้ง dependencies:
-   ```bash
-   cd backend
-   npm install
-   ```
+```bash
+git clone <repository-url>
+cd my-personal-blog-2025/backend
+```
 
-## การตั้งค่า
+### 2. ติดตั้ง Dependencies
 
-1. สร้างไฟล์ `.env` ในโฟลเดอร์ `backend` (หรือคัดลอกจาก `.env.example` ถ้ามี):
-   ```bash
-   cp .env.example .env   # ถ้ามีไฟล์ตัวอย่าง
-   ```
+```bash
+npm install
+```
 
-2. แก้ไขไฟล์ `.env` และกำหนดค่าตามสภาพแวดล้อมของคุณ:
-   ```
-   # Database Configuration
-   DB_HOST=localhost
-   DB_PORT=5432
-   DB_NAME=my_blog_db
-   DB_USER=postgres
-   DB_PASSWORD=your_password
-   
-   # Server Configuration
-   PORT=5000
-   NODE_ENV=development
-   
-   # JWT Configuration
-   JWT_SECRET=your_jwt_secret_key_change_this_in_production
-   JWT_EXPIRES_IN=1h
-   REFRESH_TOKEN_EXPIRES_IN=7d
-   
-   # CORS Configuration
-   CLIENT_URL=http://localhost:3000
-   ```
+### 3. ตั้งค่าตัวแปรสภาพแวดล้อม
 
-   **หมายเหตุ**: ควรเปลี่ยน `JWT_SECRET` เป็นค่าที่ซับซ้อนและไม่คาดเดาเพื่อความปลอดภัย
+สร้างไฟล์ `.env` จาก `.env.example`:
 
-## การสร้างฐานข้อมูล
+```bash
+cp .env.example .env
+```
 
-1. เข้าสู่ PostgreSQL:
-   ```bash
-   # ถ้าใช้ psql โดยตรง
-   psql -U postgres
-   
-   # หรือผ่าน pgAdmin หรือเครื่องมืออื่นๆ
-   ```
+แก้ไขไฟล์ `.env` เพื่อกำหนดค่าต่างๆ:
 
-2. สร้างฐานข้อมูล:
-   ```sql
-   CREATE DATABASE my_blog_db;
-   ```
+```
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=my_blog_db
+DB_USER=postgres
+DB_PASSWORD=your_password
 
-3. สร้างโครงสร้างตาราง (จากไฟล์ `database_design.md`):
+# Server Configuration
+PORT=5000
+NODE_ENV=development
 
-   ```sql
-   -- เชื่อมต่อกับฐานข้อมูล
-   \c my_blog_db
-   
-   -- สร้างตาราง users
-   CREATE TABLE users (
-     id SERIAL PRIMARY KEY,
-     username VARCHAR(50) UNIQUE NOT NULL,
-     email VARCHAR(100) UNIQUE NOT NULL,
-     password VARCHAR(100) NOT NULL,
-     full_name VARCHAR(100),
-     avatar_url VARCHAR(255),
-     bio TEXT,
-     role VARCHAR(20) DEFAULT 'user',
-     is_verified BOOLEAN DEFAULT FALSE,
-     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-   );
+# JWT Configuration
+JWT_SECRET=your_jwt_secret_key_change_this_in_production
+JWT_EXPIRES_IN=1h
+REFRESH_TOKEN_EXPIRES_IN=7d
 
-   -- สร้างตาราง refresh_tokens
-   CREATE TABLE refresh_tokens (
-     id SERIAL PRIMARY KEY,
-     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-     token VARCHAR(255) NOT NULL,
-     expires_at TIMESTAMP NOT NULL,
-     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-   );
+# CORS Configuration
+CLIENT_URL=http://localhost:3000 
+```
 
-   -- สร้างตาราง verification_tokens
-   CREATE TABLE verification_tokens (
-     id SERIAL PRIMARY KEY,
-     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-     token VARCHAR(100) NOT NULL,
-     type VARCHAR(20) NOT NULL,
-     expires_at TIMESTAMP NOT NULL,
-     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-   );
+### 4. สร้างฐานข้อมูล
 
-   -- สร้างตาราง user_sessions
-   CREATE TABLE user_sessions (
-     id SERIAL PRIMARY KEY,
-     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-     ip_address VARCHAR(45),
-     user_agent TEXT,
-     last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-   );
-   ```
+เข้าสู่ PostgreSQL และสร้างฐานข้อมูล:
 
-## การรันเซิร์ฟเวอร์
+```bash
+psql -U postgres
+```
 
-1. รันเซิร์ฟเวอร์ในโหมดพัฒนา (มี auto-reload):
-   ```bash
-   npm run dev
-   ```
+```sql
+CREATE DATABASE my_blog_db;
+\q
+```
 
-2. หรือรันเซิร์ฟเวอร์ในโหมดปกติ:
-   ```bash
-   npm start
-   ```
+### 5. รัน Migrations
 
-3. Server จะทำงานที่ http://localhost:5000 (หรือพอร์ตอื่นตามที่กำหนดในไฟล์ .env)
+รันคำสั่งต่อไปนี้เพื่อสร้างตารางในฐานข้อมูล:
 
-## โครงสร้าง API
+```bash
+npm run migrate
+```
 
-เซิร์ฟเวอร์นี้ให้บริการ API สำหรับการ authentication และการจัดการผู้ใช้ ดูรายละเอียดเพิ่มเติมได้ที่ `api_endpoints.md`
+## การรันแอปพลิเคชัน
 
-โครงสร้างพื้นฐานของ endpoints:
+### การรันในโหมดพัฒนา
 
-- **Authentication**:
-  - `POST /api/auth/register` - ลงทะเบียนผู้ใช้ใหม่
-  - `POST /api/auth/login` - เข้าสู่ระบบ
-  - `GET /api/auth/me` - ดึงข้อมูลผู้ใช้ปัจจุบัน
-  - `POST /api/auth/refresh-token` - รีเฟรช token
-  - `POST /api/auth/logout` - ออกจากระบบ
+```bash
+npm run dev
+```
 
-- **Users**:
-  - `PUT /api/users/profile` - อัปเดตข้อมูลโปรไฟล์
-  - `PUT /api/users/change-password` - เปลี่ยนรหัสผ่าน
+### การรันในโหมดการผลิต
 
-## Middleware ที่ใช้
+```bash
+npm start
+```
 
-API นี้ใช้ middleware ต่างๆ เพื่อความปลอดภัยและประสิทธิภาพ:
+## การทดสอบ API
 
-1. **Helmet**
-   - ช่วยตั้งค่า HTTP headers เพื่อเพิ่มความปลอดภัย
-   - ป้องกันภัยคุกคามทั่วไปเช่น XSS, Clickjacking, MIME sniffing
+หลังจากรันแอปพลิเคชันแล้ว คุณสามารถทดสอบ API ได้โดยส่งคำขอไปยัง:
 
-2. **Rate Limiting**
-   - จำกัดจำนวน requests ที่มาจาก IP เดียวกัน
-   - ป้องกันการโจมตีแบบ Brute Force และ DoS
+- Health Check: `http://localhost:5000/api/health`
+- API Base URL: `http://localhost:5000/api`
 
-3. **XSS Protection**
-   - ทำความสะอาดข้อมูลที่ผู้ใช้ป้อนเข้ามา
-   - ป้องกัน Cross-Site Scripting
+### ตัวอย่างการใช้งาน API:
 
-4. **CORS**
-   - ควบคุมการเข้าถึงจากแหล่งต้นทางอื่น
-   - อนุญาตเฉพาะ frontend ที่กำหนดไว้ใน CLIENT_URL
+#### 1. ตรวจสอบสถานะเซิร์ฟเวอร์
 
-5. **Error Handling**
-   - จัดการข้อผิดพลาดแบบรวมศูนย์
-   - ปรับรูปแบบข้อความผิดพลาดตามสภาพแวดล้อม
+```bash
+curl http://localhost:5000/api/health
+```
 
-6. **Logging**
-   - บันทึกข้อมูล requests ในโหมด development
+#### 2. ลงทะเบียนผู้ใช้ใหม่
+
+```bash
+curl -X POST http://localhost:5000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "testuser",
+    "email": "test@example.com",
+    "password": "Password123",
+    "full_name": "Test User"
+  }'
+```
+
+#### 3. เข้าสู่ระบบ
+
+```bash
+curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@example.com",
+    "password": "Password123"
+  }'
+```
+
+## โครงสร้างโปรเจค
+
+สำหรับข้อมูลเกี่ยวกับโครงสร้างโปรเจค โปรดดูที่ [คู่มือโครงสร้างโปรเจค](./project_structure.md)
+
+## API Endpoints
+
+สำหรับรายละเอียดเกี่ยวกับ API endpoints ทั้งหมด โปรดดูที่ [คู่มือ API](./api_endpoints.md)
 
 ## การแก้ไขปัญหา
 
 ### ปัญหาการเชื่อมต่อฐานข้อมูล
 
-1. ตรวจสอบว่าบริการ PostgreSQL กำลังทำงานอยู่
-2. ตรวจสอบว่าข้อมูลการเชื่อมต่อใน `.env` ถูกต้อง
-3. ตรวจสอบว่าฐานข้อมูลและตารางได้ถูกสร้างแล้ว
+หากคุณพบปัญหาในการเชื่อมต่อกับฐานข้อมูล:
 
-### ปัญหา CORS
+1. ตรวจสอบว่า PostgreSQL กำลังทำงานอยู่:
+   ```bash
+   pg_isready
+   ```
 
-1. ตรวจสอบว่า `CLIENT_URL` ใน `.env` ตรงกับ URL ของ frontend
-2. ตรวจสอบว่า frontend ส่ง credentials และ headers ที่ถูกต้อง
+2. ตรวจสอบข้อมูลการเชื่อมต่อในไฟล์ `.env`
 
-### ปัญหาอื่นๆ
+3. ตรวจสอบว่าผู้ใช้ PostgreSQL มีสิทธิ์เข้าถึงฐานข้อมูล
 
-หากพบปัญหาอื่นๆ ที่ไม่ได้ระบุไว้ในที่นี้ โปรดตรวจสอบ logs ของเซิร์ฟเวอร์เพื่อดูข้อความผิดพลาด 
+### ปัญหาในการรัน Migrations
+
+หากมีปัญหาในการรัน migrations:
+
+1. ตรวจสอบข้อความผิดพลาดในการรัน migrations
+2. ตรวจสอบว่าฐานข้อมูลมีอยู่จริง
+3. ลบฐานข้อมูลและสร้างใหม่ถ้าจำเป็น
+
+## การสำรองข้อมูลและการกู้คืน
+
+### การสำรองฐานข้อมูล
+
+```bash
+pg_dump -U postgres my_blog_db > backup.sql
+```
+
+### การกู้คืนฐานข้อมูล
+
+```bash
+psql -U postgres my_blog_db < backup.sql
+``` 
