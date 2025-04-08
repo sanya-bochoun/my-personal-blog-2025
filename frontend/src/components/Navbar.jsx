@@ -1,9 +1,26 @@
 import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.svg';
 import { STYLES } from '../constants/styles';
+import { useAuth } from '../context/AuthContext';
+import { toast } from 'sonner';
 
-function NavBar() {
+function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    toast.success('ออกจากระบบสำเร็จ');
+    navigate('/');
+    setIsMenuOpen(false);
+  };
+
+  const handleNavigation = (path) => {
+    navigate(path);
+    setIsMenuOpen(false);
+  };
 
   return (
     // navbar-wrapper -> STYLES.components.navbar.wrapper
@@ -22,14 +39,14 @@ function NavBar() {
         `}>
           {/* Logo Section */}
           {/* logo-wrapper -> 'flex items-center' */}
-          <div className={STYLES.components.navbar.logo.wrapper}>
+          <Link to="/" className={STYLES.components.navbar.logo.wrapper}>
             {/* logo-image -> 'w-[24px] h-[24px] sm:w-[44px] sm:h-[44px]' */}
             <img 
               src={logo} 
               alt="logo" 
               className={STYLES.components.navbar.logo.image}
             />
-          </div>
+          </Link>
           
           {/* Mobile Menu Button */}
           {/* mobile-menu -> 'block sm:hidden focus:outline-none' */}
@@ -56,19 +73,36 @@ function NavBar() {
           {/* Desktop Menu Buttons */}
           {/* desktop-buttons -> 'hidden sm:flex items-center gap-3' */}
           <div className={STYLES.components.navbar.menu.desktop.wrapper}>
-            {/* login-button -> Combined button styles */}
-            {/* 'w-[130px] h-[48px] btn-secondary text-sm font-medium flex items-center justify-center gap-[6px] py-3 px-10' */}
-            <button 
-              type="button"
-              className={STYLES.components.navbar.buttons.login.desktop}
-            >
-              Log in
-            </button>
-            {/* signup-button -> Combined button styles */}
-            {/* 'w-[143px] h-[48px] btn-primary text-sm font-medium flex items-center justify-center gap-[6px] py-3' */}
-            <button className={STYLES.components.navbar.buttons.signup.desktop}>
-              Sign up
-            </button>
+            {isAuthenticated ? (
+              <>
+                <div className="mr-4 text-sm">
+                  สวัสดี, {user?.username || user?.full_name || 'ผู้ใช้'}
+                </div>
+                <button 
+                  type="button"
+                  onClick={handleLogout}
+                  className={STYLES.components.navbar.buttons.login.desktop}
+                >
+                  Log out
+                </button>
+              </>
+            ) : (
+              <>
+                <button 
+                  type="button"
+                  onClick={() => navigate('/login')}
+                  className={STYLES.components.navbar.buttons.login.desktop}
+                >
+                  Log in
+                </button>
+                <button 
+                  onClick={() => navigate('/signup')}
+                  className={STYLES.components.navbar.buttons.signup.desktop}
+                >
+                  Sign up
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -79,19 +113,36 @@ function NavBar() {
         <div className={STYLES.components.navbar.menu.mobile.dropdown}>
           {/* mobile-menu-buttons -> 'flex flex-col gap-3' */}
           <div className={STYLES.components.navbar.menu.mobile.buttons}>
-            {/* mobile-login-button -> Combined button styles */}
-            {/* 'w-full h-[40px] btn-secondary text-sm font-medium flex items-center justify-center gap-[6px] py-2 px-6' */}
-            <button 
-              type="button"
-              className={STYLES.components.navbar.buttons.login.mobile}
-            >
-              Log in
-            </button>
-            {/* mobile-signup-button -> Combined button styles */}
-            {/* 'w-full h-[40px] btn-primary text-sm font-medium flex items-center justify-center gap-[6px] py-2 px-6' */}
-            <button className={STYLES.components.navbar.buttons.signup.mobile}>
-              Sign up
-            </button>
+            {isAuthenticated ? (
+              <>
+                <div className="text-sm mb-2 text-center">
+                  สวัสดี, {user?.username || user?.full_name || 'ผู้ใช้'}
+                </div>
+                <button 
+                  type="button"
+                  onClick={handleLogout}
+                  className={STYLES.components.navbar.buttons.login.mobile}
+                >
+                  Log out
+                </button>
+              </>
+            ) : (
+              <>
+                <button 
+                  type="button"
+                  onClick={() => handleNavigation('/login')}
+                  className={STYLES.components.navbar.buttons.login.mobile}
+                >
+                  Log in
+                </button>
+                <button 
+                  onClick={() => handleNavigation('/signup')}
+                  className={STYLES.components.navbar.buttons.signup.mobile}
+                >
+                  Sign up
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -99,4 +150,4 @@ function NavBar() {
   );
 }
 
-export default NavBar;
+export default Navbar;
