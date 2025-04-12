@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('accessToken');
       if (!token) return;
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/users/profile`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -50,8 +50,8 @@ export const AuthProvider = ({ children }) => {
 
       const data = await response.json();
       if (data.status === 'success') {
-        setUser(data.data);
-        localStorage.setItem('user', JSON.stringify(data.data));
+        setUser(data.data.user);
+        localStorage.setItem('user', JSON.stringify(data.data.user));
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
@@ -61,7 +61,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -97,10 +97,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       setIsLoading(true);
-      console.log('Sending registration request to:', `${import.meta.env.VITE_API_URL}/auth/register`);
-      console.log('Registration data:', userData);
-      
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/register`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -108,26 +105,7 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify(userData)
       });
       
-      console.log('Registration response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-      
-      // ตรวจสอบว่ามี content ใน response ก่อนพยายามแปลงเป็น JSON
-      const contentType = response.headers.get("content-type");
-      let data;
-      
-      if (contentType && contentType.includes("application/json")) {
-        data = await response.json();
-        console.log('Registration response data:', data);
-      } else {
-        // กรณีที่ response ไม่ใช่ JSON
-        const textResponse = await response.text();
-        console.log('Raw response text:', textResponse);
-        
-        data = { 
-          status: 'error', 
-          message: 'Invalid response from server. Please try again later.' 
-        };
-      }
+      const data = await response.json();
       
       if (!response.ok) {
         throw new Error(data.message || 'การลงทะเบียนล้มเหลว');
@@ -148,7 +126,7 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('accessToken');
       
       if (token) {
-        await fetch(`${import.meta.env.VITE_API_URL}/auth/logout`, {
+        await fetch(`${import.meta.env.VITE_API_URL}/api/auth/logout`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -175,7 +153,7 @@ export const AuthProvider = ({ children }) => {
         throw new Error('No refresh token available');
       }
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/refresh-token`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/refresh-token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
 
 // กำหนด API URL
 const API_URL = import.meta.env.VITE_API_URL;
@@ -15,6 +14,7 @@ function Profile() {
     email: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   
   // ใช้รูปโลโก้ default เป็นค่าเริ่มต้น
   const defaultImage = '/src/assets/default-logo.png';
@@ -41,45 +41,47 @@ function Profile() {
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error('ขนาดไฟล์ต้องไม่เกิน 2MB');
+        return;
+      }
+
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error('รองรับเฉพาะไฟล์ภาพ (JPEG, PNG, GIF)');
+        return;
+      }
+
       setIsSubmitting(true);
       try {
-        console.log('Uploading file:', file);
-        
-        // สร้าง FormData สำหรับการอัพโหลดไฟล์
         const formData = new FormData();
         formData.append('avatar', file);
-        
+
         const token = localStorage.getItem('accessToken');
-        console.log('Upload URL:', `${API_URL}/users/upload-avatar`);
-        
-        // ส่งไฟล์ไปยัง API
-        const response = await axios.post(`${API_URL}/users/upload-avatar`, formData, {
+        if (!token) {
+          throw new Error('ไม่พบ Token กรุณาเข้าสู่ระบบใหม่');
+        }
+
+        const response = await fetch(`${API_URL}/api/users/avatar`, {
+          method: 'POST',
           headers: {
-            'Content-Type': 'multipart/form-data',
             'Authorization': `Bearer ${token}`
-          }
+          },
+          body: formData
         });
 
-        console.log('Upload response:', response.data);
-        
-        // อัพเดตรูปในหน้า UI
-        if (response.data.status === 'success') {
-          const avatarUrl = response.data.data.user.avatar_url;
-          const updatedUser = {
-            ...user,
-            avatar_url: avatarUrl
-          };
-          updateUser(updatedUser);
+        const data = await response.json();
+
+        if (response.ok && data.status === 'success') {
+          updateUser(data.data.user);
+          setRefreshKey(prev => prev + 1);
           toast.success('อัพโหลดรูปภาพสำเร็จ');
+        } else {
+          throw new Error(data.message || 'เกิดข้อผิดพลาดในการอัพโหลดรูปภาพ');
         }
       } catch (err) {
-        console.error('Error uploading image:', err);
-        console.error('Error details:', {
-          message: err.message,
-          response: err.response?.data,
-          status: err.response?.status
-        });
-        toast.error(err.response?.data?.message || 'เกิดข้อผิดพลาดในการอัพโหลดรูปภาพ');
+        console.error('Error details:', err);
+        toast.error(err.message || 'เกิดข้อผิดพลาดในการอัพโหลดรูปภาพ');
       } finally {
         setIsSubmitting(false);
       }
@@ -88,49 +90,72 @@ function Profile() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // ตรวจสอบว่ามีการเปลี่ยนแปลงข้อมูลหรือไม่
+    if (formData.full_name === user.full_name && formData.username === user.username) {
+      toast.info("ไม่มีการเปลี่ยนแปลงข้อมูล");
+      return;
+    }
+
+    // ตรวจสอบว่าข้อมูลไม่ว่างเปล่า
+    if (!formData.full_name.trim() || !formData.username.trim()) {
+      toast.error("กรุณากรอกชื่อและชื่อผู้ใช้ให้ครบถ้วน");
+      return;
+    }
+
+    // ตรวจสอบความยาวของชื่อ
+    if (formData.full_name.trim().length < 2) {
+      toast.error("ชื่อต้องมีความยาวอย่างน้อย 2 ตัวอักษร");
+      return;
+    }
+
+    // ตรวจสอบความยาวของ username
+    if (formData.username.trim().length < 3) {
+      toast.error("ชื่อผู้ใช้ต้องมีความยาวอย่างน้อย 3 ตัวอักษร");
+      return;
+    }
+
+    // ตรวจสอบรูปแบบของ username (ไม่ควรมีช่องว่าง)
+    if (formData.username.includes(' ')) {
+      toast.error("ชื่อผู้ใช้ไม่ควรมีช่องว่าง");
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
-      // เตรียมข้อมูลที่จะส่ง
-      const dataToUpdate = {
-        full_name: formData.full_name,
-        username: formData.username
-      };
-
-      console.log('API URL:', API_URL);
-      console.log('Data to update:', dataToUpdate);
-      
       const token = localStorage.getItem('accessToken');
-      console.log('Token:', token);
+      if (!token) {
+        throw new Error('กรุณาเข้าสู่ระบบใหม่');
+      }
 
-      // ส่งข้อมูลไปยัง API
-      const response = await axios.put(`${API_URL}/users/profile`, dataToUpdate, {
+      const response = await fetch(`${API_URL}/api/users/profile`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-        }
+        },
+        body: JSON.stringify({
+          full_name: formData.full_name.trim(),
+          username: formData.username.trim()
+        })
       });
-      
-      console.log('API Response:', response.data);
-      
-      // อัปเดต user context ถ้าการส่งข้อมูลสำเร็จ
-      if (response.data.status === 'success') {
-        const updatedUser = {
-          ...user,
-          full_name: formData.full_name,
-          username: formData.username
-        };
-        updateUser(updatedUser);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+      }
+
+      if (data.status === 'success') {
+        updateUser(data.data.user);
         toast.success("บันทึกข้อมูลสำเร็จ");
+      } else {
+        throw new Error(data.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");
       }
     } catch (err) {
       console.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล:", err);
-      console.error("Error details:", {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status
-      });
-      toast.error(err.response?.data?.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+      toast.error(err.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");
     } finally {
       setIsSubmitting(false);
     }
@@ -141,21 +166,31 @@ function Profile() {
   }
 
   return (
-    <div className="bg-[#F9F9F9] min-h-screen pt-28">
+    <div className="bg-[#F9F9F9] min-h-screen pt-28" key={refreshKey}>
       <div className="max-w-5xl mx-auto px-4">
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-12 h-12 rounded-full overflow-hidden bg-[#777777]">
-            <img 
-              src={user?.avatar_url || defaultImage}
-              alt="Profile"
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = defaultImage;
-              }}
+          <label className="cursor-pointer">
+            <div className="w-12 h-12 rounded-full overflow-hidden bg-[#777777] hover:opacity-80 transition-opacity">
+              <img 
+                src={user?.avatar_url || defaultImage}
+                alt="Profile"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = defaultImage;
+                }}
+              />
+            </div>
+            <input 
+              type="file"
+              name="avatar"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageUpload}
+              disabled={isSubmitting}
             />
-          </div>
+          </label>
           <h1 className="text-xl"><span className="text-gray-500">{user?.username || user?.full_name || 'ผู้ใช้'}</span> <span className="text-gray-500">|</span> <span className="font-medium">Profile</span></h1>
         </div>
 
@@ -206,9 +241,10 @@ function Profile() {
                      style={{ padding: '12px 40px' }}>
                   <span>Upload profile picture</span>
                   <input 
-                    type="file" 
-                    accept="image/*" 
-                    className="hidden" 
+                    type="file"
+                    name="avatar"
+                    accept="image/*"
+                    className="hidden"
                     onChange={handleImageUpload}
                     disabled={isSubmitting}
                   />
@@ -258,11 +294,19 @@ function Profile() {
                 <div className="flex justify-start mt-6">
                   <button
                     type="submit"
-                    className="w-[120px] h-[48px] bg-[#26231E] text-white rounded-[999px] hover:bg-gray-800 disabled:opacity-50"
+                    className="w-[120px] h-[48px] bg-[#26231E] text-white rounded-[999px] hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ padding: '12px 40px' }}
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? 'กำลัง...' : 'Save'}
+                    {isSubmitting ? (
+                      <div className="flex items-center justify-center">
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        กำลังบันทึก...
+                      </div>
+                    ) : 'Save'}
                   </button>
                 </div>
               </form>

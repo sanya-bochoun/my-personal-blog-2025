@@ -11,7 +11,7 @@ import { Readable } from 'stream';
  */
 const updateProfile = async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = req.user.id;
     const { full_name, username, bio, avatar_url } = req.body;
 
     // ตรวจสอบว่าผู้ใช้มีอยู่หรือไม่
@@ -124,7 +124,7 @@ const bufferToStream = (buffer) => {
  */
 const uploadAvatar = async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = req.user.id;
     
     // ตรวจสอบว่ามีไฟล์อัปโหลดหรือไม่
     if (!req.file) {
@@ -209,8 +209,8 @@ const uploadAvatar = async (req, res) => {
  */
 const changePassword = async (req, res) => {
   try {
-    const userId = req.userId;
-    const { current_password, new_password } = req.body;
+    const userId = req.user.id;
+    const { currentPassword, newPassword } = req.body;
 
     // ตรวจสอบว่าผู้ใช้มีอยู่หรือไม่และดึงรหัสผ่านปัจจุบัน
     const userResult = await db.query('SELECT password FROM users WHERE id = $1', [userId]);
@@ -224,7 +224,7 @@ const changePassword = async (req, res) => {
     const user = userResult.rows[0];
 
     // ตรวจสอบรหัสผ่านปัจจุบัน
-    const passwordMatch = await bcrypt.compare(current_password, user.password);
+    const passwordMatch = await bcrypt.compare(currentPassword, user.password);
     if (!passwordMatch) {
       return res.status(401).json({
         status: 'error',
@@ -234,7 +234,7 @@ const changePassword = async (req, res) => {
 
     // เข้ารหัสรหัสผ่านใหม่
     const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(new_password, saltRounds);
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
     // อัปเดตรหัสผ่านในฐานข้อมูล
     await db.query(
@@ -261,7 +261,7 @@ const changePassword = async (req, res) => {
  */
 export const getProfile = async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = req.user.id;
 
     const result = await db.query(
       'SELECT id, username, email, full_name, bio, avatar_url, role, created_at, updated_at FROM users WHERE id = $1',
