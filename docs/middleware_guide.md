@@ -450,28 +450,20 @@ const refreshTokenRules = [
 Refresh Token เป็นกลไกที่ใช้เพื่อต่ออายุ Access Token เมื่อหมดอายุโดยไม่ต้องให้ผู้ใช้เข้าสู่ระบบใหม่ 
 ระบบของเราใช้ Refresh Token ตามขั้นตอนดังนี้:
 
-1. เมื่อผู้ใช้เข้าสู่ระบบ จะได้รับทั้ง Access Token และ Refresh Token
-2. Access Token จะมีอายุการใช้งานสั้น (เช่น 15 นาที)
-3. Refresh Token จะมีอายุการใช้งานยาวกว่า (เช่น 7 วัน)
-4. เมื่อ Access Token หมดอายุ ผู้ใช้สามารถใช้ Refresh Token เพื่อขอ Access Token ใหม่ได้
+1. เมื่อผู้ใช้เข้าสู่ระบบ จะได้รับ access token และ refresh token
+2. เมื่อ access token หมดอายุ ไคลเอนต์ส่ง refresh token ไปยังเอนด์พอยท์ `/auth/refresh-token`
+3. เซิร์ฟเวอร์ตรวจสอบ refresh token ในฐานข้อมูล แล้วสร้าง access token ใหม่
 
-### การตรวจสอบความถูกต้องของ Refresh Token
-
-ไฟล์ `validateMiddleware.js` มีการตรวจสอบความถูกต้องของ Refresh Token ดังนี้:
+กฎการตรวจสอบความถูกต้องของ refresh token (validation):
 
 ```javascript
-/**
- * กฎสำหรับตรวจสอบการรีเฟรช token
- */
 const refreshTokenRules = [
   body('refreshToken')
     .notEmpty().withMessage('กรุณาระบุ refresh token')
 ];
 ```
 
-### การใช้งาน Refresh Token ในเส้นทาง (Routes)
-
-เราได้กำหนดเส้นทางสำหรับการรีเฟรช token ใน `authRoutes.js`:
+เอนด์พอยท์สำหรับ refresh token:
 
 ```javascript
 router.post('/refresh-token', refreshTokenRules, validate, authController.refreshToken);
@@ -546,12 +538,110 @@ const refreshToken = async (req, res) => {
 
 ### ความปลอดภัยของ Refresh Token
 
-1. **เก็บในฐานข้อมูล**: เราเก็บ Refresh Token ในฐานข้อมูลพร้อมกับวันหมดอายุและ user_id
-2. **การยกเลิกเมื่อออกจากระบบ**: เมื่อผู้ใช้ออกจากระบบ เราจะลบ Refresh Token ออกจากฐานข้อมูล
-3. **การหมดอายุ**: กำหนดเวลาหมดอายุสำหรับ Refresh Token (เช่น 7 วัน)
-4. **ไม่เปิดเผยในการส่งข้อมูล**: ใช้ HTTPS สำหรับทุกการสื่อสารที่มี Token
+การใช้งาน Refresh Token ต้องคำนึงถึงความปลอดภัยเป็นสำคัญ ระบบของเราได้ดำเนินการตามแนวทางปฏิบัติด้านความปลอดภัยดังนี้:
 
-โดยการใช้ Refresh Token อย่างเหมาะสม จะช่วยเพิ่มความปลอดภัยให้กับระบบการยืนยันตัวตนของแอปพลิเคชัน
-โดยจำกัดช่วงเวลาของการเข้าถึงและลดความเสี่ยงจากการขโมย Token
+1. **เก็บใน Database**: Refresh Token จะถูกเก็บในฐานข้อมูลพร้อมกับข้อมูลผู้ใช้และวันหมดอายุ
+2. **อายุการใช้งาน**: กำหนดให้มีอายุการใช้งาน 7 วัน
+3. **Invalidation เมื่อออกจากระบบ**: เมื่อผู้ใช้ออกจากระบบ (Logout) Refresh Token จะถูกลบออกจากฐานข้อมูล
+
+```javascript
+const logout = async (req, res) => {
+  try {
+    // ลบ refresh token ออกจากฐานข้อมูล
+    await db.query(
+      'DELETE FROM refresh_tokens WHERE user_id = $1',
+      [req.userId]
+    );
+
+    res.json({
+      status: 'success',
+      message: 'ออกจากระบบสำเร็จ'
+    });
+  } catch (error) {
+    console.error('Logout error:', error.message);
+    res.status(500).json({
+      status: 'error',
+      message: 'เกิดข้อผิดพลาดในการออกจากระบบ'
+    });
+  }
+};
+```
+
+### การป้องกัน Token Theft
+
+เพื่อป้องกันการโจรกรรม Token เราใช้วิธีการดังนี้:
+
+1. **ใช้ HTTPS เท่านั้น**: ทุกการสื่อสารระหว่าง Client และ Server ใช้ HTTPS เพื่อป้องกันการดักจับข้อมูล
+2. **เก็บ Token ที่ฝั่ง Client อย่างปลอดภัย**: แนะนำให้เก็บใน HttpOnly Cookie หรือ Secure Storage
+3. **Token Rotation**: เมื่อมีการใช้ Refresh Token ใหม่ ระบบจะตรวจสอบและบันทึกการใช้งาน
+
+### กระบวนการทำงานแบบสมบูรณ์
+
+กระบวนการทำงานของ Refresh Token ในระบบมีขั้นตอนดังนี้:
+
+1. **Client Side**:
+   - เก็บ Access Token ใน Memory หรือ State ของแอปพลิเคชัน
+   - เก็บ Refresh Token ใน HttpOnly Cookie หรือ Secure Storage
+   - ตรวจสอบอายุ Access Token ก่อนส่งคำขอไปยัง API
+   - หาก Access Token หมดอายุ ให้ส่ง Refresh Token ไปขอ Access Token ใหม่
+
+2. **Server Side**:
+   - ตรวจสอบ Refresh Token จากฐานข้อมูล
+   - ตรวจสอบว่า Token ยังไม่หมดอายุ
+   - สร้าง Access Token ใหม่และส่งกลับไปยัง Client
+
+```javascript
+// ตัวอย่างการใช้งานที่ฝั่ง Client (React)
+const refreshAccessToken = async () => {
+  try {
+    const response = await axios.post('/api/auth/refresh-token', {
+      refreshToken: localStorage.getItem('refreshToken')
+    });
+    
+    if (response.data.status === 'success') {
+      localStorage.setItem('accessToken', response.data.data.accessToken);
+      return response.data.data.accessToken;
+    }
+  } catch (error) {
+    // หาก refresh token ไม่ถูกต้องหรือหมดอายุ ให้นำผู้ใช้ไปยังหน้า login
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    window.location.href = '/login';
+  }
+};
+```
+
+### การจัดการ Token ในฐานข้อมูล
+
+ระบบของเราใช้ตาราง `refresh_tokens` เพื่อจัดเก็บและจัดการ Refresh Tokens:
+
+```sql
+CREATE TABLE refresh_tokens (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  last_used_at TIMESTAMP
+);
+
+-- สร้าง index เพื่อเพิ่มประสิทธิภาพในการค้นหา
+CREATE INDEX idx_refresh_tokens_token ON refresh_tokens(token);
+CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+```
+
+ด้วยการออกแบบนี้ ระบบสามารถ:
+- บันทึกเวลาที่ Token ถูกสร้าง
+- ติดตามเวลาที่ Token ถูกใช้งานล่าสุด
+- กำหนดเวลาหมดอายุของ Token
+- ลบ Token อัตโนมัติเมื่อผู้ใช้ถูกลบออกจากระบบ
+
+### การเพิ่มประสิทธิภาพและความปลอดภัย
+
+เพื่อเพิ่มประสิทธิภาพและความปลอดภัยของระบบ Refresh Token เราแนะนำให้ดำเนินการเพิ่มเติมดังนี้:
+
+1. **การจำกัดจำนวน Token ต่อผู้ใช้**: กำหนดจำนวน Refresh Token สูงสุดต่อผู้ใช้ และลบ Token เก่าเมื่อมีการสร้าง Token ใหม่เกินกำหนด
+2. **การตรวจสอบการใช้งานที่ผิดปกติ**: ตรวจสอบและบล็อกการใช้งาน Token ที่มีพฤติกรรมผิดปกติ เช่น การใช้งานจาก IP ที่แตกต่างกันในระยะเวลาสั้นๆ
+3. **การใช้งาน Token Blacklist**: เพิ่มตาราง token_blacklist เพื่อเก็บรายการ Token ที่ถูกเพิกถอนสิทธิ์
 
 // ... existing code ...

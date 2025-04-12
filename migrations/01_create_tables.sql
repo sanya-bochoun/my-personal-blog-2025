@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS users (
   bio TEXT,
   role VARCHAR(20) DEFAULT 'user',
   is_verified BOOLEAN DEFAULT FALSE,
+  reset_password_token VARCHAR(100),
+  reset_password_expires TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

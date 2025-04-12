@@ -1,4 +1,4 @@
-const { body, validationResult, param, query } = require('express-validator');
+import { body, validationResult, param, query } from 'express-validator';
 
 /**
  * ฟังก์ชันที่ใช้สำหรับตรวจสอบผลลัพธ์การ validate
@@ -67,6 +67,12 @@ const updateProfileRules = [
     .trim()
     .isLength({ max: 100 }).withMessage('ชื่อต้องมีความยาวไม่เกิน 100 ตัวอักษร'),
   
+  body('username')
+    .optional()
+    .trim()
+    .isLength({ min: 3, max: 30 }).withMessage('ชื่อผู้ใช้ต้องมีความยาว 3-30 ตัวอักษร')
+    .matches(/^[a-zA-Z0-9_]+$/).withMessage('ชื่อผู้ใช้ต้องประกอบด้วยตัวอักษร ตัวเลข หรือ _ เท่านั้น'),
+  
   body('bio')
     .optional()
     .trim()
@@ -99,7 +105,7 @@ const refreshTokenRules = [
     .notEmpty().withMessage('กรุณาระบุ refresh token')
 ];
 
-module.exports = {
+export {
   validate,
   registerRules,
   loginRules,
