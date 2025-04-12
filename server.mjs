@@ -13,6 +13,7 @@ import { testConnection } from './utils/db.mjs';
 import routes from './routes/index.mjs';
 import { errorHandler } from './middleware/errorHandler.mjs';
 import { notFoundHandler } from './middleware/notFoundHandler.mjs';
+import notificationRoutes from './routes/notificationRoutes.mjs';
 
 // ES modules fix for __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -64,6 +65,7 @@ if (process.env.NODE_ENV === 'development') {
 
 // ลงทะเบียน API routes
 app.use('/api', routes);
+app.use('/api/notifications', notificationRoutes);
 
 // Test route
 app.get('/', (req, res) => {
