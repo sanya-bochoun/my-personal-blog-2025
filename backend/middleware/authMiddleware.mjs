@@ -145,6 +145,50 @@ const checkOwnership = (paramName, tableName, ownerField) => {
   };
 };
 
+export const protect = async (req, res, next) => {
+  try {
+    let token;
+
+    // ตรวจสอบว่ามี token ใน header หรือไม่
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    if (!token) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'กรุณาเข้าสู่ระบบก่อน'
+      });
+    }
+
+    // ตรวจสอบความถูกต้องของ token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // ดึงข้อมูลผู้ใช้จากฐานข้อมูล
+    const result = await db.query(
+      'SELECT id, email, role FROM users WHERE id = $1',
+      [decoded.userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'ไม่พบผู้ใช้งานนี้ในระบบ'
+      });
+    }
+
+    // เพิ่มข้อมูลผู้ใช้ไว้ใน request object
+    req.user = result.rows[0];
+    next();
+  } catch (error) {
+    console.error('Auth middleware error:', error);
+    return res.status(401).json({
+      status: 'error',
+      message: 'ไม่มีสิทธิ์เข้าถึง กรุณาเข้าสู่ระบบใหม่'
+    });
+  }
+};
+
 export {
   authenticateToken,
   checkRole,
