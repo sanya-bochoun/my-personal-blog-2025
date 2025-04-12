@@ -1,18 +1,31 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const rateLimit = require('express-rate-limit');
-const xss = require('xss-clean');
-require('dotenv').config();
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
+import xss from 'xss-clean';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import dotenv from 'dotenv';
 
-const db = require('./config/db');
+import { testConnection } from './utils/db.mjs';
+import routes from './routes/index.mjs';
+import { errorHandler } from './middleware/errorHandler.mjs';
+import { notFoundHandler } from './middleware/notFoundHandler.mjs';
+
+// ES modules fix for __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load environment variables
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ทดสอบการเชื่อมต่อกับฐานข้อมูล
-db.testConnection();
+testConnection();
 
 // Security Middleware
 // 1. Helmet - ตั้งค่า HTTP headers เพื่อความปลอดภัย
@@ -32,7 +45,7 @@ app.use(xss());
 
 // CORS
 app.use(cors({
-  origin: process.env.CLIENT_URL,
+  origin: process.env.FRONTEND_URL || '*',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
 }));
@@ -41,10 +54,16 @@ app.use(cors({
 app.use(express.json({ limit: '10kb' })); // จำกัดขนาด request body
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
+// Serving static files
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Logging Middleware
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+
+// ลงทะเบียน API routes
+app.use('/api', routes);
 
 // Test route
 app.get('/', (req, res) => {
@@ -59,7 +78,7 @@ app.get('/', (req, res) => {
 app.get('/api/health', async (req, res) => {
   try {
     // ทดสอบการเชื่อมต่อกับฐานข้อมูล
-    const dbConnected = await db.testConnection();
+    const dbConnected = await testConnection();
     
     res.json({
       status: 'ok',
@@ -76,31 +95,17 @@ app.get('/api/health', async (req, res) => {
 });
 
 // Global Error Handler
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-    status: 'error',
-    message: process.env.NODE_ENV === 'production' 
-      ? 'Something went wrong!' 
-      : err.message
-  });
-});
-
-// Handle 404 routes
-app.use((req, res) => {
-  res.status(404).json({
-    status: 'fail',
-    message: `Can't find ${req.originalUrl} on this server!`
-  });
-});
+app.use(errorHandler);
+app.use(notFoundHandler);
 
 // เริ่มต้น server
 app.listen(PORT, () => {
   console.log(`✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨
 🌈 🚀 Server is running successfully! 🚀 🌈
+🔹 Environment: ${process.env.NODE_ENV}
 🔹 Port: ${PORT}
 🔹 Status: Online and ready!
-🔹 URLs: http://localhost:${PORT} / http://127.0.0.1:${PORT}
+🔹 URLs: http://localhost:${PORT}
 🔹 API: http://localhost:${PORT}/api
 🔹 Health Check: http://localhost:${PORT}/api/health
 🔹 Time: ${new Date().toLocaleString()}

@@ -25,7 +25,7 @@ const Login = () => {
     const result = await login(formData);
     
     if (result.success) {
-      toast.success('เข้าสู่ระบบสำเร็จ');
+      toast.success('Login successful');
       navigate('/');
     }
   };
@@ -47,7 +47,7 @@ const Login = () => {
               value={formData.email}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white"
-              placeholder="Email"
+              placeholder="Enter your email"
               required
             />
           </div>
@@ -63,9 +63,14 @@ const Login = () => {
               value={formData.password}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white"
-              placeholder="Password"
+              placeholder="Enter your password"
               required
             />
+            <div className="mt-2 text-right">
+              <Link to="/forgot-password" className="text-sm text-gray-600 hover:text-gray-900">
+                Forgot password?
+              </Link>
+            </div>
           </div>
           
           <button
@@ -73,7 +78,7 @@ const Login = () => {
             className="w-full sm:w-32 mx-auto block bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50 cursor-pointer"
             disabled={isLoading}
           >
-            {isLoading ? 'กำลังเข้าสู่ระบบ...' : 'Log in'}
+            {isLoading ? 'Logging in...' : 'Log in'}
           </button>
         </form>
         

@@ -1,495 +1,40 @@
-# API Endpoints
+# API Documentation
 
-เอกสารนี้อธิบาย API endpoints ทั้งหมดของ Blog API
+## Base URL
+```
+http://localhost:5000/api
+```
 
-## การยืนยันตัวตน (Authentication)
+## Authentication
+ทุก endpoint ที่ต้องการการยืนยันตัวตนจะต้องส่ง token ในรูปแบบ Bearer Token:
+```
+Authorization: Bearer <access_token>
+```
 
-| Endpoint | Method | Description | Authentication Required |
-|----------|--------|-------------|-------------------------|
-| `/api/auth/register` | POST | ลงทะเบียนผู้ใช้ใหม่ | No |
-| `/api/auth/login` | POST | เข้าสู่ระบบ | No |
-| `/api/auth/refresh-token` | POST | รีเฟรช access token | No |
-| `/api/auth/logout` | POST | ออกจากระบบ | Yes |
-| `/api/auth/me` | GET | ดึงข้อมูลผู้ใช้ปัจจุบัน | Yes |
+## Response Formats
 
-### ลงทะเบียนผู้ใช้ใหม่
-
-- **URL**: `/api/auth/register`
-- **Method**: `POST`
-- **Body**:
-  ```json
-  {
-    "username": "johndoe",
-    "email": "john@example.com",
-    "password": "Password123",
-    "full_name": "John Doe"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "status": "success",
-    "message": "ลงทะเบียนสำเร็จ",
-    "data": {
-      "user": {
-        "id": 1,
-        "username": "johndoe",
-        "email": "john@example.com",
-        "full_name": "John Doe",
-        "role": "user"
-      }
-    }
-  }
-  ```
-
-### เข้าสู่ระบบ
-
-- **URL**: `/api/auth/login`
-- **Method**: `POST`
-- **Body**:
-  ```json
-  {
-    "email": "john@example.com",
-    "password": "Password123"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "status": "success",
-    "message": "เข้าสู่ระบบสำเร็จ",
-    "data": {
-      "user": {
-        "id": 1,
-        "username": "johndoe",
-        "email": "john@example.com",
-        "full_name": "John Doe",
-        "role": "user"
-      },
-      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-    }
-  }
-  ```
-
-### รีเฟรช Token
-
-- **URL**: `/api/auth/refresh-token`
-- **Method**: `POST`
-- **Body**:
-  ```json
-  {
-    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "status": "success",
-    "data": {
-      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-    }
-  }
-  ```
-
-### ออกจากระบบ
-
-- **URL**: `/api/auth/logout`
-- **Method**: `POST`
-- **Headers**:
-  ```
-  Authorization: Bearer <access_token>
-  ```
-- **Body**:
-  ```json
-  {
-    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "status": "success",
-    "message": "ออกจากระบบสำเร็จ"
-  }
-  ```
-
-### ดึงข้อมูลผู้ใช้ปัจจุบัน
-
-- **URL**: `/api/auth/me`
-- **Method**: `GET`
-- **Headers**:
-  ```
-  Authorization: Bearer <access_token>
-  ```
-- **Response**:
-  ```json
-  {
-    "status": "success",
-    "data": {
-      "user": {
-        "id": 1,
-        "username": "johndoe",
-        "email": "john@example.com",
-        "full_name": "John Doe",
-        "avatar_url": null,
-        "bio": null,
-        "role": "user",
-        "created_at": "2023-09-01T13:45:30.000Z"
-      }
-    }
-  }
-  ```
-
-## ผู้ใช้ (Users)
-
-| Endpoint | Method | Description | Authentication Required |
-|----------|--------|-------------|-------------------------|
-| `/api/users/profile` | PUT | อัปเดตโปรไฟล์ผู้ใช้ | Yes |
-| `/api/users/change-password` | PUT | เปลี่ยนรหัสผ่าน | Yes |
-
-### อัปเดตโปรไฟล์ผู้ใช้
-
-- **URL**: `/api/users/profile`
-- **Method**: `PUT`
-- **Headers**:
-  ```
-  Authorization: Bearer <access_token>
-  ```
-- **Body**:
-  ```json
-  {
-    "full_name": "John Smith",
-    "bio": "I'm a software developer",
-    "avatar_url": "https://example.com/avatar.jpg"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "status": "success",
-    "message": "อัปเดตโปรไฟล์สำเร็จ",
-    "data": {
-      "user": {
-        "id": 1,
-        "username": "johndoe",
-        "email": "john@example.com",
-        "full_name": "John Smith",
-        "avatar_url": "https://example.com/avatar.jpg",
-        "bio": "I'm a software developer",
-        "role": "user"
-      }
-    }
-  }
-  ```
-
-### เปลี่ยนรหัสผ่าน
-
-- **URL**: `/api/users/change-password`
-- **Method**: `PUT`
-- **Headers**:
-  ```
-  Authorization: Bearer <access_token>
-  ```
-- **Body**:
-  ```json
-  {
-    "current_password": "Password123",
-    "new_password": "NewPassword456"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "status": "success",
-    "message": "เปลี่ยนรหัสผ่านสำเร็จ"
-  }
-  ```
-
-## บทความ (Posts)
-
-| Endpoint | Method | Description | Authentication Required |
-|----------|--------|-------------|-------------------------|
-| `/api/posts` | GET | ดึงรายการบทความทั้งหมด | No |
-| `/api/posts/:slug` | GET | ดึงบทความตาม slug | No |
-| `/api/posts` | POST | สร้างบทความใหม่ | Yes |
-| `/api/posts/:id` | PUT | อัปเดตบทความ | Yes |
-| `/api/posts/:id` | DELETE | ลบบทความ | Yes |
-| `/api/posts/:id/like` | POST | กดไลค์บทความ | Yes |
-
-### ดึงรายการบทความทั้งหมด
-
-- **URL**: `/api/posts`
-- **Method**: `GET`
-- **Query Parameters**:
-  - `page` - หน้าที่ต้องการ (เริ่มต้นที่ 1)
-  - `limit` - จำนวนบทความต่อหน้า (เริ่มต้นที่ 10)
-  - `category` - กรองตามหมวดหมู่
-  - `tag` - กรองตามแท็ก
-  - `search` - ค้นหาบทความ
-- **Response**:
-  ```json
-  {
-    "status": "success",
-    "data": {
-      "posts": [
-        {
-          "id": 1,
-          "title": "บทความแรกของฉัน",
-          "slug": "my-first-post",
-          "excerpt": "นี่คือบทความแรกของฉัน...",
-          "featured_image": "https://example.com/image.jpg",
-          "author": {
-            "id": 1,
-            "username": "johndoe",
-            "full_name": "John Doe"
-          },
-          "category": {
-            "id": 1,
-            "name": "เทคโนโลยี",
-            "slug": "technology"
-          },
-          "published_at": "2023-09-05T10:30:00.000Z"
-        },
-        // ... more posts
-      ],
-      "pagination": {
-        "total": 25,
-        "page": 1,
-        "limit": 10,
-        "pages": 3
-      }
-    }
-  }
-  ```
-
-### ดึงบทความตาม slug
-
-- **URL**: `/api/posts/:slug`
-- **Method**: `GET`
-- **Response**:
-  ```json
-  {
-    "status": "success",
-    "data": {
-      "post": {
-        "id": 1,
-        "title": "บทความแรกของฉัน",
-        "slug": "my-first-post",
-        "content": "เนื้อหาบทความ...",
-        "featured_image": "https://example.com/image.jpg",
-        "view_count": 150,
-        "author": {
-          "id": 1,
-          "username": "johndoe",
-          "full_name": "John Doe",
-          "avatar_url": "https://example.com/avatar.jpg"
-        },
-        "category": {
-          "id": 1,
-          "name": "เทคโนโลยี",
-          "slug": "technology"
-        },
-        "tags": [
-          {
-            "id": 1,
-            "name": "JavaScript",
-            "slug": "javascript"
-          },
-          {
-            "id": 2,
-            "name": "React",
-            "slug": "react"
-          }
-        ],
-        "published_at": "2023-09-05T10:30:00.000Z",
-        "likes_count": 25,
-        "is_liked": false
-      }
-    }
-  }
-  ```
-
-### สร้างบทความใหม่
-
-- **URL**: `/api/posts`
-- **Method**: `POST`
-- **Headers**:
-  ```
-  Authorization: Bearer <access_token>
-  ```
-- **Body**:
-  ```json
-  {
-    "title": "บทความใหม่ของฉัน",
-    "content": "เนื้อหาบทความ...",
-    "excerpt": "สรุปสั้นๆ ของบทความ",
-    "featured_image": "https://example.com/image.jpg",
-    "category_id": 1,
-    "tags": [1, 2],
-    "published": true
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "status": "success",
-    "message": "สร้างบทความสำเร็จ",
-    "data": {
-      "post": {
-        "id": 3,
-        "title": "บทความใหม่ของฉัน",
-        "slug": "my-new-post",
-        "content": "เนื้อหาบทความ...",
-        "excerpt": "สรุปสั้นๆ ของบทความ",
-        "featured_image": "https://example.com/image.jpg",
-        "author_id": 1,
-        "category_id": 1,
-        "published": true,
-        "published_at": "2023-09-10T15:20:30.000Z",
-        "created_at": "2023-09-10T15:20:30.000Z"
-      }
-    }
-  }
-  ```
-
-## ความคิดเห็น (Comments)
-
-| Endpoint | Method | Description | Authentication Required |
-|----------|--------|-------------|-------------------------|
-| `/api/posts/:postId/comments` | GET | ดึงความคิดเห็นของบทความ | No |
-| `/api/posts/:postId/comments` | POST | เพิ่มความคิดเห็นใหม่ | Yes |
-| `/api/comments/:id` | PUT | แก้ไขความคิดเห็น | Yes |
-| `/api/comments/:id` | DELETE | ลบความคิดเห็น | Yes |
-
-### ดึงความคิดเห็นของบทความ
-
-- **URL**: `/api/posts/:postId/comments`
-- **Method**: `GET`
-- **Response**:
-  ```json
-  {
-    "status": "success",
-    "data": {
-      "comments": [
-        {
-          "id": 1,
-          "content": "ความคิดเห็นแรก",
-          "user": {
-            "id": 2,
-            "username": "janedoe",
-            "full_name": "Jane Doe",
-            "avatar_url": "https://example.com/jane-avatar.jpg"
-          },
-          "created_at": "2023-09-06T08:15:00.000Z",
-          "replies": [
-            {
-              "id": 2,
-              "content": "การตอบกลับความคิดเห็นแรก",
-              "user": {
-                "id": 1,
-                "username": "johndoe",
-                "full_name": "John Doe",
-                "avatar_url": "https://example.com/john-avatar.jpg"
-              },
-              "created_at": "2023-09-06T09:30:00.000Z"
-            }
-          ]
-        }
-      ]
-    }
-  }
-  ```
-
-## หมวดหมู่และแท็ก
-
-| Endpoint | Method | Description | Authentication Required |
-|----------|--------|-------------|-------------------------|
-| `/api/categories` | GET | ดึงรายการหมวดหมู่ทั้งหมด | No |
-| `/api/tags` | GET | ดึงรายการแท็กทั้งหมด | No |
-
-### ดึงรายการหมวดหมู่ทั้งหมด
-
-- **URL**: `/api/categories`
-- **Method**: `GET`
-- **Response**:
-  ```json
-  {
-    "status": "success",
-    "data": {
-      "categories": [
-        {
-          "id": 1,
-          "name": "เทคโนโลยี",
-          "slug": "technology",
-          "description": "บทความเกี่ยวกับเทคโนโลยี"
-        },
-        {
-          "id": 2,
-          "name": "ไลฟ์สไตล์",
-          "slug": "lifestyle",
-          "description": "บทความเกี่ยวกับไลฟ์สไตล์"
-        }
-      ]
-    }
-  }
-  ```
-
-### ดึงรายการแท็กทั้งหมด
-
-- **URL**: `/api/tags`
-- **Method**: `GET`
-- **Response**:
-  ```json
-  {
-    "status": "success",
-    "data": {
-      "tags": [
-        {
-          "id": 1,
-          "name": "JavaScript",
-          "slug": "javascript"
-        },
-        {
-          "id": 2,
-          "name": "React",
-          "slug": "react"
-        }
-      ]
-    }
-  }
-  ```
-
-## การจัดการข้อผิดพลาด
-
-API จะส่งรหัสสถานะ HTTP และข้อความแสดงข้อผิดพลาดในรูปแบบต่อไปนี้:
-
+### Success Response
 ```json
 {
-  "status": "error",
-  "message": "ข้อความแสดงข้อผิดพลาด"
+  "success": true,
+  "data": {
+    // response data
+  }
 }
 ```
 
-หรือในกรณีที่มีข้อผิดพลาดของการตรวจสอบข้อมูล:
-
+### Error Response
 ```json
 {
-  "status": "error",
-  "errors": [
-    {
-      "field": "email",
-      "message": "รูปแบบอีเมลไม่ถูกต้อง"
-    },
-    {
-      "field": "password",
-      "message": "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร"
-    }
-  ]
+  "success": false,
+  "error": {
+    "message": "string",
+    "code": "string"
+  }
 }
 ```
 
-## รหัสสถานะ HTTP
+## Error Codes
 
 | Code | Description |
 |------|-------------|
@@ -500,4 +45,197 @@ API จะส่งรหัสสถานะ HTTP และข้อควา�
 | 403 | Forbidden - ไม่มีสิทธิ์เข้าถึง (เข้าสู่ระบบแล้วแต่ไม่มีสิทธิ์) |
 | 404 | Not Found - ไม่พบรายการที่ร้องขอ |
 | 429 | Too Many Requests - ส่งคำขอมากเกินไป |
-| 500 | Internal Server Error - ข้อผิดพลาดภายในเซิร์ฟเวอร์ | 
+| 500 | Internal Server Error - ข้อผิดพลาดภายในเซิร์ฟเวอร์ |
+
+## Rate Limiting
+
+- 100 requests per IP per 15 minutes
+- 1000 requests per IP per day
+
+## File Upload Limits
+
+- Maximum file size: 2MB
+- Allowed file types: image/* (jpg, jpeg, png, gif)
+
+## Endpoints
+
+### Authentication
+
+| Endpoint | Method | Description | Authentication Required |
+|----------|--------|-------------|-------------------------|
+| `/auth/register` | POST | ลงทะเบียนผู้ใช้ใหม่ | No |
+| `/auth/login` | POST | เข้าสู่ระบบ | No |
+| `/auth/refresh-token` | POST | รีเฟรช access token | No |
+| `/auth/logout` | POST | ออกจากระบบ | Yes |
+| `/auth/me` | GET | ดึงข้อมูลผู้ใช้ปัจจุบัน | Yes |
+
+#### Register
+```http
+POST /auth/register
+Content-Type: application/json
+
+{
+  "username": "string",
+  "email": "string",
+  "password": "string",
+  "full_name": "string"
+}
+```
+
+#### Login
+```http
+POST /auth/login
+Content-Type: application/json
+
+{
+  "email": "string",
+  "password": "string"
+}
+```
+
+#### Get Profile
+```http
+GET /auth/me
+Authorization: Bearer <access_token>
+```
+
+#### Refresh Token
+```http
+POST /auth/refresh-token
+Content-Type: application/json
+
+{
+  "refreshToken": "string"
+}
+```
+
+#### Logout
+```http
+POST /auth/logout
+Authorization: Bearer <access_token>
+```
+
+### User Management
+
+| Endpoint | Method | Description | Authentication Required |
+|----------|--------|-------------|-------------------------|
+| `/users/profile` | PUT | อัปเดตโปรไฟล์ผู้ใช้ | Yes |
+| `/users/upload-avatar` | POST | อัปโหลดรูปโปรไฟล์ | Yes |
+| `/users/change-password` | PUT | เปลี่ยนรหัสผ่าน | Yes |
+
+#### Update Profile
+```http
+PUT /users/profile
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "full_name": "string",
+  "bio": "string",
+  "avatar_url": "string"
+}
+```
+
+#### Upload Avatar
+```http
+POST /users/upload-avatar
+Authorization: Bearer <access_token>
+Content-Type: multipart/form-data
+
+avatar: <file>
+```
+
+#### Change Password
+```http
+PUT /users/change-password
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "current_password": "string",
+  "new_password": "string"
+}
+```
+
+### Posts
+
+| Endpoint | Method | Description | Authentication Required |
+|----------|--------|-------------|-------------------------|
+| `/posts` | GET | ดึงรายการบทความทั้งหมด | No |
+| `/posts/:slug` | GET | ดึงบทความตาม slug | No |
+| `/posts` | POST | สร้างบทความใหม่ | Yes |
+| `/posts/:id` | PUT | อัปเดตบทความ | Yes |
+| `/posts/:id` | DELETE | ลบบทความ | Yes |
+| `/posts/:id/like` | POST | กดไลค์บทความ | Yes |
+
+#### Get All Posts
+```http
+GET /posts
+Query Parameters:
+- page: number (default: 1)
+- limit: number (default: 10)
+- category: string
+- tag: string
+- search: string
+```
+
+#### Get Post by Slug
+```http
+GET /posts/:slug
+```
+
+#### Create Post
+```http
+POST /posts
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "title": "string",
+  "content": "string",
+  "description": "string",
+  "tags": ["string"]
+}
+```
+
+#### Update Post
+```http
+PUT /posts/:id
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "title": "string",
+  "content": "string",
+  "description": "string",
+  "tags": ["string"]
+}
+```
+
+#### Delete Post
+```http
+DELETE /posts/:id
+Authorization: Bearer <access_token>
+```
+
+#### Toggle Like
+```http
+POST /posts/:id/like
+Authorization: Bearer <access_token>
+```
+
+### Comments
+
+| Endpoint | Method | Description | Authentication Required |
+|----------|--------|-------------|-------------------------|
+| `/posts/:postId/comments` | GET | ดึงความคิดเห็นของบทความ | No |
+| `/posts/:postId/comments` | POST | เพิ่มความคิดเห็นใหม่ | Yes |
+| `/comments/:id` | PUT | แก้ไขความคิดเห็น | Yes |
+| `/comments/:id` | DELETE | ลบความคิดเห็น | Yes |
+
+### Categories & Tags
+
+| Endpoint | Method | Description | Authentication Required |
+|----------|--------|-------------|-------------------------|
+| `/categories` | GET | ดึงรายการหมวดหมู่ทั้งหมด | No |
+| `/tags` | GET | ดึงรายการแท็กทั้งหมด | No | 

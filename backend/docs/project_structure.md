@@ -7,47 +7,47 @@
 ```
 backend/
 ├── config/             # ไฟล์การตั้งค่าต่างๆ
-│   └── db.js           # การเชื่อมต่อฐานข้อมูล
+│   └── db.mjs          # การเชื่อมต่อฐานข้อมูล
 ├── controllers/        # ตัวควบคุมสำหรับจัดการ business logic
 ├── docs/               # เอกสารโปรเจค
 ├── middleware/         # middleware สำหรับการประมวลผลคำขอ
-│   ├── authMiddleware.js    # middleware สำหรับการยืนยันตัวตน
-│   └── validateMiddleware.js # middleware สำหรับการตรวจสอบข้อมูล
+│   ├── authMiddleware.mjs    # middleware สำหรับการยืนยันตัวตน
+│   └── validateMiddleware.mjs # middleware สำหรับการตรวจสอบข้อมูล
 ├── migrations/         # ไฟล์สำหรับการสร้างและอัปเดตฐานข้อมูล
 │   ├── 01_create_tables.sql      # สร้างตารางพื้นฐาน
 │   └── 02_create_blog_tables.sql # สร้างตารางสำหรับบทความ
 ├── routes/             # เส้นทาง API
 ├── utils/              # ฟังก์ชันยูทิลิตี้
-│   ├── dbMigrate.js    # เครื่องมือสำหรับรัน migrations
-│   └── errorHandler.js # ตัวจัดการข้อผิดพลาด
+│   ├── dbMigrate.mjs    # เครื่องมือสำหรับรัน migrations
+│   └── errorHandler.mjs # ตัวจัดการข้อผิดพลาด
 ├── .env                # ไฟล์ตัวแปรสภาพแวดล้อม (ไม่รวมใน Git)
 ├── .env.example        # ตัวอย่างไฟล์ตัวแปรสภาพแวดล้อม
 ├── package.json        # รายการ dependencies และ scripts
-└── server.js           # จุดเริ่มต้นของแอปพลิเคชัน
+└── server.mjs          # จุดเริ่มต้นของแอปพลิเคชัน
 ```
 
 ## กลุ่มไฟล์หลัก
 
 ### 1. การตั้งค่า (Config)
 
-- **db.js**: ใช้สำหรับการเชื่อมต่อกับฐานข้อมูล PostgreSQL
+- **db.mjs**: ใช้สำหรับการเชื่อมต่อกับฐานข้อมูล PostgreSQL
 
 ### 2. Controllers
 
 ไฟล์ที่ควรมีในโฟลเดอร์นี้:
-- **authController.js**: จัดการการลงทะเบียน, เข้าสู่ระบบ, ออกจากระบบ และรีเฟรชโทเคน
-- **postController.js**: จัดการบทความ (สร้าง, อ่าน, อัปเดต, ลบ)
-- **userController.js**: จัดการข้อมูลผู้ใช้
-- **commentController.js**: จัดการความคิดเห็น
+- **authController.mjs**: จัดการการลงทะเบียน, เข้าสู่ระบบ, ออกจากระบบ และรีเฟรชโทเคน
+- **postController.mjs**: จัดการบทความ (สร้าง, อ่าน, อัปเดต, ลบ)
+- **userController.mjs**: จัดการข้อมูลผู้ใช้
+- **commentController.mjs**: จัดการความคิดเห็น
 
 ### 3. Middleware
 
-- **authMiddleware.js**: ตรวจสอบการยืนยันตัวตนและสิทธิ์การเข้าถึง
+- **authMiddleware.mjs**: ตรวจสอบการยืนยันตัวตนและสิทธิ์การเข้าถึง
   - `authenticateToken`: ตรวจสอบ JWT token
   - `checkRole`: ตรวจสอบบทบาทของผู้ใช้
   - `checkOwnership`: ตรวจสอบความเป็นเจ้าของข้อมูล
 
-- **validateMiddleware.js**: ตรวจสอบความถูกต้องของข้อมูลที่ส่งเข้ามา
+- **validateMiddleware.mjs**: ตรวจสอบความถูกต้องของข้อมูลที่ส่งเข้ามา
   - `validate`: ตรวจสอบผลลัพธ์ validation
   - `registerRules`: กฎสำหรับการลงทะเบียน
   - `loginRules`: กฎสำหรับการเข้าสู่ระบบ
@@ -61,16 +61,16 @@ backend/
 ### 5. Routes
 
 ไฟล์ที่ควรมีในโฟลเดอร์นี้:
-- **index.js**: รวมเส้นทาง API ทั้งหมด
-- **authRoutes.js**: เส้นทางสำหรับการยืนยันตัวตน
-- **postRoutes.js**: เส้นทางสำหรับบทความ
-- **userRoutes.js**: เส้นทางสำหรับผู้ใช้
-- **commentRoutes.js**: เส้นทางสำหรับความคิดเห็น
+- **index.mjs**: รวมเส้นทาง API ทั้งหมด
+- **authRoutes.mjs**: เส้นทางสำหรับการยืนยันตัวตน
+- **postRoutes.mjs**: เส้นทางสำหรับบทความ
+- **userRoutes.mjs**: เส้นทางสำหรับผู้ใช้
+- **commentRoutes.mjs**: เส้นทางสำหรับความคิดเห็น
 
 ### 6. Utils
 
-- **dbMigrate.js**: เครื่องมือสำหรับรัน migrations ของฐานข้อมูล
-- **errorHandler.js**: ตัวจัดการข้อผิดพลาดสำหรับใช้ในแอปพลิเคชัน
+- **dbMigrate.mjs**: เครื่องมือสำหรับรัน migrations ของฐานข้อมูล
+- **errorHandler.mjs**: ตัวจัดการข้อผิดพลาดสำหรับใช้ในแอปพลิเคชัน
   - `catchAsync`: จับ error ใน async functions
   - `AppError`: คลาสสำหรับสร้าง error ที่กำหนดเอง
 

@@ -1,117 +1,166 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useAuth } from "../context/AuthContext";
+import axios from 'axios';
+import { formatDistanceToNow } from 'date-fns';
+import { th } from 'date-fns/locale';
 import AlertDialog from './ui/AlertDialog';
 import { toast } from 'sonner';
 
-// Hardcoded comments data
-const INITIAL_COMMENTS = [
-  {
-    id: 1,
-    author: "Jacob Lash",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jacob",
-    date: "12 September 2024 at 18:30",
-    content: "I loved this article! It really explains why my cat is so independent yet loving. The purring section was super interesting."
-  },
-  {
-    id: 2,
-    author: "Ahri",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ahri",
-    date: "12 September 2024 at 18:30",
-    content: "Such a great read! I've always wondered why my cat slow blinks at me—now I know it's her way of showing trust!"
-  },
-  {
-    id: 3,
-    author: "Mimi mama",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mimi",
-    date: "12 September 2024 at 18:30",
-    content: "This article perfectly captures why cats make such amazing pets. I had no idea their purring could help with healing. Fascinating stuff!"
-  }
-];
-
-function CommentSection() {
-  const [comments, setComments] = useState(INITIAL_COMMENTS);
+const CommentSection = ({ postId }) => {
+  const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { user, token } = useAuth();
   const [isAlertOpen, setIsAlertOpen] = useState(false);
-  const isLoggedIn = false; // TODO: Replace with actual auth state
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!isLoggedIn) {
-      setIsAlertOpen(true);
-      return;
+  // ดึงคอมเมนต์ทั้งหมด
+  const fetchComments = useCallback(async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/comments/post/${postId}`);
+      setComments(response.data);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
     }
-    
+  }, [postId]);
+
+  useEffect(() => {
+    fetchComments();
+  }, [fetchComments]);
+
+  // สร้างคอมเมนต์ใหม่
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     if (!newComment.trim()) return;
 
-    const comment = {
-      id: comments.length + 1,
-      author: "Guest User",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Guest",
-      date: new Date().toLocaleString('en-US', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: false
-      }),
-      content: newComment.trim()
-    };
+    setLoading(true);
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/comments`,
+        {
+          post_id: postId,
+          content: newComment
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      setComments([response.data, ...comments]);
+      setNewComment('');
+      toast.success('Comment posted!', {
+        description: 'Your comment has been added successfully.',
+      });
+    } catch (error) {
+      console.error('Error creating comment:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    setComments([...comments, comment]);
-    setNewComment('');
-    
-    toast.success('Comment posted!', {
-      description: 'Your comment has been added successfully.',
-    });
+  // ลบคอมเมนต์
+  const handleDelete = async (commentId) => {
+    try {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/comments/${commentId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setComments(comments.filter(comment => comment.id !== commentId));
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+    }
+  };
+
+  // ไลค์/ยกเลิกไลค์คอมเมนต์
+  const handleLike = async (commentId) => {
+    try {
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/comments/${commentId}/like`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      fetchComments(); // รีเฟรชคอมเมนต์เพื่ออัปเดตสถานะไลค์
+    } catch (error) {
+      console.error('Error toggling like:', error);
+    }
   };
 
   return (
     <div className="mt-8">
-      {/* Comment Form */}
-      <div className="mb-8">
-        <h3 className="text-xl font-semibold mb-4 text-left">Comment</h3>
-        <form onSubmit={handleSubmit}>
+      <h3 className="text-xl font-semibold mb-4">ความคิดเห็น</h3>
+      
+      {/* ฟอร์มสร้างคอมเมนต์ */}
+      {user && (
+        <form onSubmit={handleSubmit} className="mb-6">
           <textarea
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            placeholder="What are your thoughts?"
-            className="w-full h-[102px] pt-3 pr-1 pb-1 pl-4 border border-[#DAD6D1] rounded-[8px] mb-4 resize-none focus:outline-none bg-white"
-            style={{ 
-              padding: '12px 4px 4px 16px'
-            }}
+            placeholder="เขียนความคิดเห็น..."
+            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+            rows="3"
           />
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              className="bg-[#26231E] text-white px-10 py-3 rounded-full hover:bg-gray-800 w-[121px] h-[48px]"
-              style={{ 
-                padding: '12px 40px',
-                borderRadius: '999px'
-              }}
-            >
-              Send
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+          >
+            {loading ? 'กำลังส่ง...' : 'ส่งความคิดเห็น'}
+          </button>
         </form>
-      </div>
+      )}
 
-      {/* Comments List */}
-      <div className="space-y-6 divide-y divide-gray-200">
-        {comments.map(comment => (
-          <div key={comment.id} className="flex gap-4 pt-6 pb-6 first:pt-0">
-            <div className="flex-shrink-0">
-              <img
-                src={comment.avatar}
-                alt={comment.author}
-                className="w-10 h-10 rounded-full"
-              />
-            </div>
-            <div className="flex-1">
-              <div className="flex flex-col text-left">
-                <h4 className="font-medium text-gray-900">{comment.author}</h4>
-                <span className="text-sm text-gray-500 mb-2">{comment.date}</span>
-                <p className="text-gray-700">{comment.content}</p>
+      {/* แสดงคอมเมนต์ทั้งหมด */}
+      <div className="space-y-4">
+        {comments.map((comment) => (
+          <div key={comment.id} className="bg-gray-50 p-4 rounded-lg">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center space-x-2">
+                <img
+                  src={comment.avatar_url || '/default-avatar.png'}
+                  alt={comment.username}
+                  className="w-8 h-8 rounded-full"
+                />
+                <div>
+                  <p className="font-medium">{comment.username}</p>
+                  <p className="text-sm text-gray-500">
+                    {formatDistanceToNow(new Date(comment.created_at), {
+                      addSuffix: true,
+                      locale: th
+                    })}
+                  </p>
+                </div>
               </div>
+              {user && user.id === comment.user_id && (
+                <button
+                  onClick={() => handleDelete(comment.id)}
+                  className="text-red-500 hover:text-red-600"
+                >
+                  ลบ
+                </button>
+              )}
+            </div>
+            <p className="mt-2">{comment.content}</p>
+            <div className="mt-2 flex items-center space-x-4">
+              <button
+                onClick={() => handleLike(comment.id)}
+                className={`flex items-center space-x-1 ${
+                  comment.user_liked ? 'text-blue-500' : 'text-gray-500'
+                }`}
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill={comment.user_liked ? 'currentColor' : 'none'}
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0-.714.211-1.412.608-2.006L7.11 2.42A1.994 1.994 0 0110 2h4a2 2 0 012 2v8m-6 0h6"
+                  />
+                </svg>
+                <span>{comment.likes_count || 0}</span>
+              </button>
             </div>
           </div>
         ))}
@@ -124,6 +173,6 @@ function CommentSection() {
       />
     </div>
   );
-}
+};
 
 export default CommentSection; 

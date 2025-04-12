@@ -33,6 +33,31 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
+  const fetchUserProfile = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/users/profile`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user profile');
+      }
+
+      const data = await response.json();
+      if (data.status === 'success') {
+        setUser(data.data);
+        localStorage.setItem('user', JSON.stringify(data.data));
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
+
   const login = async (credentials) => {
     try {
       setIsLoading(true);
@@ -56,6 +81,9 @@ export const AuthProvider = ({ children }) => {
       
       setUser(data.data.user);
       setIsAuthenticated(true);
+
+      // ดึงข้อมูล user ล่าสุดหลังจาก login
+      await fetchUserProfile();
       
       return { success: true };
     } catch (error) {
@@ -69,6 +97,9 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       setIsLoading(true);
+      console.log('Sending registration request to:', `${import.meta.env.VITE_API_URL}/auth/register`);
+      console.log('Registration data:', userData);
+      
       const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/register`, {
         method: 'POST',
         headers: {
@@ -77,7 +108,26 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify(userData)
       });
       
-      const data = await response.json();
+      console.log('Registration response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      
+      // ตรวจสอบว่ามี content ใน response ก่อนพยายามแปลงเป็น JSON
+      const contentType = response.headers.get("content-type");
+      let data;
+      
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+        console.log('Registration response data:', data);
+      } else {
+        // กรณีที่ response ไม่ใช่ JSON
+        const textResponse = await response.text();
+        console.log('Raw response text:', textResponse);
+        
+        data = { 
+          status: 'error', 
+          message: 'Invalid response from server. Please try again later.' 
+        };
+      }
       
       if (!response.ok) {
         throw new Error(data.message || 'การลงทะเบียนล้มเหลว');
@@ -85,6 +135,7 @@ export const AuthProvider = ({ children }) => {
       
       return { success: true };
     } catch (error) {
+      console.error('Registration error:', error);
       toast.error(error.message || 'เกิดข้อผิดพลาดในการลงทะเบียน');
       return { success: false, error: error.message };
     } finally {
@@ -147,6 +198,29 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // เพิ่มฟังก์ชัน updateUser สำหรับอัปเดตข้อมูลผู้ใช้
+  const updateUser = (updatedUserData) => {
+    try {
+      // อัปเดต state
+      setUser(updatedUserData);
+      
+      // อัปเดตข้อมูลใน localStorage
+      localStorage.setItem('user', JSON.stringify(updatedUserData));
+      
+      return true;
+    } catch (error) {
+      console.error('Update user error:', error);
+      return false;
+    }
+  };
+
+  // เรียกใช้ fetchUserProfile เมื่อ component mount
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchUserProfile();
+    }
+  }, [isAuthenticated]);
+
   const value = {
     user,
     isAuthenticated,
@@ -154,7 +228,8 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
-    refreshToken
+    refreshToken,
+    updateUser
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

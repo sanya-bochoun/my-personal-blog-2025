@@ -1,5 +1,8 @@
-const jwt = require('jsonwebtoken');
-require('dotenv').config();
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+import db from '../utils/db.mjs';
+
+dotenv.config();
 
 /**
  * Middleware สำหรับตรวจสอบ JWT token
@@ -51,7 +54,6 @@ const checkRole = (roles) => {
       }
       
       // ดึงข้อมูลผู้ใช้จากฐานข้อมูล
-      const db = require('../config/db');
       const result = await db.query('SELECT role FROM users WHERE id = $1', [req.userId]);
       
       if (result.rows.length === 0) {
@@ -112,7 +114,6 @@ const checkOwnership = (paramName, tableName, ownerField) => {
       }
       
       // ตรวจสอบจากฐานข้อมูล
-      const db = require('../config/db');
       const query = `SELECT ${ownerField} FROM ${tableName} WHERE id = $1`;
       const result = await db.query(query, [itemId]);
       
@@ -144,7 +145,7 @@ const checkOwnership = (paramName, tableName, ownerField) => {
   };
 };
 
-module.exports = {
+export {
   authenticateToken,
   checkRole,
   checkOwnership

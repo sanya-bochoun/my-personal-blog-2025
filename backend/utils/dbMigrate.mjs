@@ -1,20 +1,19 @@
-const path = require('path');
-const fs = require('fs').promises;
-const { Pool } = require('pg');
-require('dotenv').config();
+import path from 'path';
+import { promises as fs } from 'fs';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { query } from './db.mjs';
 
-// สร้าง database connection pool
-const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'my_blog_db',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'admin'
-});
+// ตั้งค่า dotenv
+dotenv.config();
+
+// หา directory path ของไฟล์ปัจจุบัน
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ตาราง migrations สำหรับเก็บประวัติการรัน migrations
 const createMigrationsTable = async () => {
-  await pool.query(`
+  await query(`
     CREATE TABLE IF NOT EXISTS migrations (
       id SERIAL PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
@@ -25,7 +24,7 @@ const createMigrationsTable = async () => {
 
 // ฟังก์ชันสำหรับดึงรายการ migrations ที่รันไปแล้ว
 const getMigratedFiles = async () => {
-  const result = await pool.query('SELECT name FROM migrations');
+  const result = await query('SELECT name FROM migrations');
   return result.rows.map(row => row.name);
 };
 
@@ -62,10 +61,10 @@ const migrate = async () => {
         const sql = await fs.readFile(filePath, 'utf8');
         
         // รัน SQL
-        await pool.query(sql);
+        await query(sql);
         
         // บันทึกว่าได้รัน migration นี้แล้ว
-        await pool.query('INSERT INTO migrations (name) VALUES ($1)', [file]);
+        await query('INSERT INTO migrations (name) VALUES ($1)', [file]);
         
         console.log(`Migration สำเร็จ: ${file}`);
         newMigrations++;
@@ -81,9 +80,6 @@ const migrate = async () => {
   } catch (error) {
     console.error('เกิดข้อผิดพลาดในการ migrate:', error.message);
     process.exit(1);
-  } finally {
-    // ปิด pool
-    await pool.end();
   }
 };
 
