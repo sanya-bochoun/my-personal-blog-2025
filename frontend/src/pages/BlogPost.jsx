@@ -6,12 +6,15 @@ import { format } from 'date-fns';
 import { cn } from "@/lib/utils";
 import SocialShareBanner from '@/components/SocialShareBanner';
 import CommentSection from '@/components/CommentSection';
+import { useAuth } from '../context/AuthContext';
 
 function BlogPost() {
   const { id } = useParams();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { user } = useAuth();
+  const defaultImage = '/src/assets/default-avatar.png';
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -111,27 +114,21 @@ function BlogPost() {
 
           {/* Author Info for Mobile */}
           <div className="block lg:hidden mt-8 mb-8">
-            <aside className="bg-gray-50 p-6 rounded-xl">
+            <aside className="bg-[#F9F9F9] p-6 rounded-xl">
               <div className="flex items-start gap-4 mb-4">
-                <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200">
-                  <img 
-                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author}`}
-                    alt={post.author}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+                <img 
+                  src={user?.avatar_url || defaultImage}
+                  alt="Author"
+                  className="w-16 h-16 rounded-full object-cover"
+                />
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1 text-left">Author</h3>
-                  <p className="text-lg font-medium text-gray-800 text-left">{post.author}</p>
+                  <p className="text-[#777777] text-sm mb-1">Author</p>
+                  <p className="text-xl text-[#4A4A4A]">{user?.username || "Anonymous"}</p>
                 </div>
               </div>
               <div className="prose prose-sm text-left">
-                <p className="text-gray-600">
-                  I am a pet enthusiast and freelance writer who specializes in animal behavior and care. 
-                  With a deep love for cats, I enjoy sharing insights on feline companionship and wellness.
-                </p>
-                <p className="mt-4 text-gray-600">
-                  When I'm not writing, I spend time volunteering at my local animal shelter, helping cats find loving homes.
+                <p className="text-[#4A4A4A] text-base leading-relaxed">
+                  {user?.bio || "A passionate writer sharing stories and insights with the world."}
                 </p>
               </div>
             </aside>
@@ -150,27 +147,21 @@ function BlogPost() {
         </div>
 
         {/* Author Sidebar for Desktop */}
-        <aside className="hidden lg:block bg-gray-50 p-6 rounded-xl h-fit sticky top-24">
+        <aside className="hidden lg:block bg-[#F9F9F9] p-6 rounded-xl h-fit sticky top-24">
           <div className="flex items-start gap-4 mb-4">
-            <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200">
-              <img 
-                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author}`}
-                alt={post.author}
-                className="w-full h-full object-cover"
-              />
-            </div>
+            <img 
+              src={user?.avatar_url || defaultImage}
+              alt="Author"
+              className="w-16 h-16 rounded-full object-cover"
+            />
             <div>
-              <h3 className="font-semibold text-gray-900 mb-1 text-left">Author</h3>
-              <p className="text-lg font-medium text-gray-800 text-left">{post.author}</p>
+              <p className="text-[#777777] text-sm mb-1">Author</p>
+              <p className="text-xl text-[#4A4A4A]">{user?.username || "Anonymous"}</p>
             </div>
           </div>
           <div className="prose prose-sm text-left">
-            <p className="text-gray-600">
-              I am a pet enthusiast and freelance writer who specializes in animal behavior and care. 
-              With a deep love for cats, I enjoy sharing insights on feline companionship and wellness.
-            </p>
-            <p className="mt-4 text-gray-600">
-              When I'm not writing, I spend time volunteering at my local animal shelter, helping cats find loving homes.
+            <p className="text-[#4A4A4A] text-base leading-relaxed">
+              {user?.bio || "A passionate writer sharing stories and insights with the world."}
             </p>
           </div>
         </aside>

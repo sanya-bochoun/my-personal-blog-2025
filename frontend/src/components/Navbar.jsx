@@ -175,23 +175,26 @@ function Navbar() {
       
       {/* Mobile Menu Dropdown */}
       {isMenuOpen && (
-        // mobile-menu-dropdown -> 'block sm:hidden bg-[var(--background-color)] border-b border-[#DAD6D1] px-[24px] py-4 absolute w-full'
         <div className={STYLES.components.navbar.menu.mobile.dropdown}>
-          {/* mobile-menu-buttons -> 'flex flex-col gap-3' */}
           <div className={STYLES.components.navbar.menu.mobile.buttons}>
             {isAuthenticated ? (
               <>
-                <div className="flex items-center mb-4">
-                  <div className="w-10 h-10 overflow-hidden rounded-full bg-gray-200 mr-3">
-                    <img 
-                      src={user?.avatar_url || defaultLogo} 
-                      alt="Profile"
-                      className="w-full h-full object-cover"
-                    />
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 overflow-hidden rounded-full bg-gray-200 mr-3">
+                      <img 
+                        src={user?.avatar_url || defaultLogo} 
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <span className="font-medium text-[#26231E]">
+                      {user?.username || user?.full_name || 'ผู้ใช้'}
+                    </span>
                   </div>
-                  <span className="font-medium text-[#26231E]">
-                    {user?.username || user?.full_name || 'ผู้ใช้'}
-                  </span>
+                  <div className="flex items-center">
+                    <NotificationBell />
+                  </div>
                 </div>
                 <button 
                   type="button"
