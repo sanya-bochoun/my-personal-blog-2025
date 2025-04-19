@@ -116,27 +116,40 @@ function Navbar() {
                   </button>
                   
                   {isDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5">
-                      <button
-                        onClick={() => handleNavigation('/profile')}
+                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5">
+                      <Link
+                        to="/article-management"
+                        className="w-full flex items-center px-4 py-3 text-left text-gray-700 hover:bg-gray-100 whitespace-nowrap"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        <svg className="mr-3 w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2.5 2.5 0 00-2.5-2.5H15" />
+                        </svg>
+                        <span className="truncate">Article Management</span>
+                      </Link>
+                      <Link
+                        to="/profile"
                         className="w-full flex items-center px-4 py-3 text-left text-gray-700 hover:bg-gray-100"
+                        onClick={() => setIsDropdownOpen(false)}
                       >
                         <svg className="mr-3 w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                           <circle cx="12" cy="7" r="4"></circle>
                         </svg>
                         Profile
-                      </button>
-                      <button
-                        onClick={() => handleNavigation('/reset-password')}
+                      </Link>
+
+                      <Link
+                        to="/reset-password"
                         className="w-full flex items-center px-4 py-3 text-left text-gray-700 hover:bg-gray-100"
+                        onClick={() => setIsDropdownOpen(false)}
                       >
                         <svg className="mr-3 w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                          <path d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                         </svg>
                         Reset password
-                      </button>
+                      </Link>
+
                       <button
                         onClick={handleLogout}
                         className="w-full flex items-center px-4 py-3 text-left text-gray-700 hover:bg-gray-100"
@@ -146,7 +159,7 @@ function Navbar() {
                           <polyline points="16 17 21 12 16 7"></polyline>
                           <line x1="21" y1="12" x2="9" y2="12"></line>
                         </svg>
-                        Log out
+                        Logout
                       </button>
                     </div>
                   )}
@@ -196,28 +209,38 @@ function Navbar() {
                     <NotificationBell />
                   </div>
                 </div>
-                <button 
-                  type="button"
-                  onClick={() => handleNavigation('/profile')}
+                <Link
+                  to="/article-management"
                   className="w-full text-left flex items-center py-2 text-gray-700"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <svg className="mr-3 w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2.5 2.5 0 00-2.5-2.5H15" />
+                  </svg>
+                  Article Management
+                </Link>
+                <Link
+                  to="/profile"
+                  className="w-full text-left flex items-center py-2 text-gray-700"
+                  onClick={() => setIsMenuOpen(false)}
                 >
                   <svg className="mr-3 w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                     <circle cx="12" cy="7" r="4"></circle>
                   </svg>
                   Profile
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => handleNavigation('/reset-password')}
+                </Link>
+                <Link
+                  to="/reset-password"
                   className="w-full text-left flex items-center py-2 text-gray-700"
+                  onClick={() => setIsMenuOpen(false)}
                 >
                   <svg className="mr-3 w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                   </svg>
-                  Reset password
-                </button>
+                  Reset Password
+                </Link>
                 <button 
                   type="button"
                   onClick={handleLogout}
@@ -228,7 +251,7 @@ function Navbar() {
                     <polyline points="16 17 21 12 16 7"></polyline>
                     <line x1="21" y1="12" x2="9" y2="12"></line>
                   </svg>
-                  Log out
+                  Logout
                 </button>
               </>
             ) : (

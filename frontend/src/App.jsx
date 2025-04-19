@@ -17,6 +17,8 @@ import ForgotPassword from './pages/ForgotPassword'
 import BackToTopButton from './components/BackToTopButton'
 import { Toaster } from 'sonner'
 import { useAuth } from './context/AuthContext'
+import ArticleManagement from './pages/ArticleManagement'
+import CreateArticle from './pages/CreateArticle'
 
 // สร้าง Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -59,6 +61,16 @@ function App() {
           <Route path="/reset-password" element={
             <ProtectedRoute>
               <ResetPassword />
+            </ProtectedRoute>
+          } />
+          <Route path="/article-management" element={
+            <ProtectedRoute>
+              <ArticleManagement />
+            </ProtectedRoute>
+          } />
+          <Route path="/create-article" element={
+            <ProtectedRoute>
+              <CreateArticle />
             </ProtectedRoute>
           } />
           <Route path="*" element={<NotFound />} />
