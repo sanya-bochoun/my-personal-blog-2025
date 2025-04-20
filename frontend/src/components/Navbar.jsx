@@ -127,6 +127,20 @@ function Navbar() {
                         </svg>
                         <span className="truncate">Article Management</span>
                       </Link>
+                      {user?.role === 'admin' && (
+                        <Link
+                          to="/admin/article-management"
+                          className="w-full flex items-center px-4 py-3 text-left text-gray-700 hover:bg-gray-100"
+                          onClick={() => setIsDropdownOpen(false)}
+                        >
+                          <svg className="mr-3 w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                            <line x1="3" y1="9" x2="21" y2="9" />
+                            <line x1="9" y1="21" x2="9" y2="9" />
+                          </svg>
+                          Admin Panel
+                        </Link>
+                      )}
                       <Link
                         to="/profile"
                         className="w-full flex items-center px-4 py-3 text-left text-gray-700 hover:bg-gray-100"
