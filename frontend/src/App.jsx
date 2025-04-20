@@ -18,7 +18,16 @@ import BackToTopButton from './components/BackToTopButton'
 import { Toaster } from 'sonner'
 import { useAuth } from './context/AuthContext'
 import ArticleManagement from './pages/ArticleManagement'
-import CreateArticle from './pages/CreateArticle'
+import AdminLayout from './pages/admin/AdminLayout'
+import AdminArticleManagement from './pages/admin/ArticleManagement'
+import AdminCreateArticle from './pages/admin/CreateArticle'
+import CategoryManagement from './pages/admin/CategoryManagement'
+import CreateCategory from './pages/admin/CreateCategory'
+import AdminProfile from './pages/admin/AdminProfile'
+import Notification from './pages/admin/Notification'
+import AdminResetPassword from './pages/admin/ResetPassword'
+import UserManagement from './pages/admin/UserManagement'
+import AdminResetUserPassword from './pages/admin/AdminResetUserPassword'
 
 // สร้าง Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -35,52 +44,70 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+// สร้าง Layout Component
+const MainLayout = ({ children }) => {
+  return (
+    <>
+      <Navbar />
+      {children}
+      <Footer />
+      <BackToTopButton />
+    </>
+  );
+};
+
 function App() {
   return (
     <Router>
       <div className="app">
-        <Navbar />
         <Routes>
-          <Route path="/" element={
-            <>
-              <HeroSection />
-              <ArticleSection />
-            </>
-          } />
-          <Route path="/article/:id" element={<BlogPost />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:token" element={<ResetPasswordByToken />} />
-          <Route path="/registration-success" element={<RegistrationSuccess />} />
+          {/* Admin Routes */}
+          <Route path="/admin" element={
+            <ProtectedRoute>
+              <AdminLayout />
+            </ProtectedRoute>
+          }>
+            <Route path="article-management" element={<AdminArticleManagement />} />
+            <Route path="create-article" element={<AdminCreateArticle />} />
+            <Route path="category-management" element={<CategoryManagement />} />
+            <Route path="create-category" element={<CreateCategory />} />
+            <Route path="profile" element={<AdminProfile />} />
+            <Route path="notification" element={<Notification />} />
+            <Route path="reset-password" element={<AdminResetPassword />} />
+            <Route path="user-management" element={<UserManagement />} />
+            <Route path="reset-user-password/:userId" element={<AdminResetUserPassword />} />
+            {/* Other admin routes will be added here */}
+          </Route>
+
+          {/* Main Website Routes */}
+          <Route path="/" element={<MainLayout><><HeroSection /><ArticleSection /></></MainLayout>} />
+          <Route path="/article/:id" element={<MainLayout><BlogPost /></MainLayout>} />
+          <Route path="/signup" element={<MainLayout><SignUp /></MainLayout>} />
+          <Route path="/login" element={<MainLayout><Login /></MainLayout>} />
+          <Route path="/forgot-password" element={<MainLayout><ForgotPassword /></MainLayout>} />
+          <Route path="/reset-password/:token" element={<MainLayout><ResetPasswordByToken /></MainLayout>} />
+          <Route path="/registration-success" element={<MainLayout><RegistrationSuccess /></MainLayout>} />
           <Route path="/profile" element={
             <ProtectedRoute>
-              <Profile />
+              <MainLayout><Profile /></MainLayout>
             </ProtectedRoute>
           } />
           <Route path="/reset-password" element={
             <ProtectedRoute>
-              <ResetPassword />
+              <MainLayout><ResetPassword /></MainLayout>
             </ProtectedRoute>
           } />
           <Route path="/article-management" element={
             <ProtectedRoute>
-              <ArticleManagement />
+              <MainLayout><ArticleManagement /></MainLayout>
             </ProtectedRoute>
           } />
-          <Route path="/create-article" element={
-            <ProtectedRoute>
-              <CreateArticle />
-            </ProtectedRoute>
-          } />
-          <Route path="*" element={<NotFound />} />
+          <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />
         </Routes>
-        <Footer />
-        <BackToTopButton />
         <Toaster position="top-right" />
       </div>
     </Router>
-  )
+  );
 }
 
-export default App
+export default App;
