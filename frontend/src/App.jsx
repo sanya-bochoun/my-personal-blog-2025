@@ -23,6 +23,7 @@ import AdminArticleManagement from './pages/admin/ArticleManagement'
 import AdminCreateArticle from './pages/admin/CreateArticle'
 import CategoryManagement from './pages/admin/CategoryManagement'
 import CreateCategory from './pages/admin/CreateCategory'
+import EditCategory from './pages/admin/EditCategory'
 import AdminProfile from './pages/admin/AdminProfile'
 import Notification from './pages/admin/Notification'
 import AdminResetPassword from './pages/admin/ResetPassword'
@@ -72,6 +73,7 @@ function App() {
             <Route path="create-article" element={<AdminCreateArticle />} />
             <Route path="category-management" element={<CategoryManagement />} />
             <Route path="create-category" element={<CreateCategory />} />
+            <Route path="edit-category/:id" element={<EditCategory />} />
             <Route path="profile" element={<AdminProfile />} />
             <Route path="notification" element={<Notification />} />
             <Route path="reset-password" element={<AdminResetPassword />} />
@@ -108,6 +110,9 @@ function App() {
               <MainLayout><CreateArticle /></MainLayout>
             </ProtectedRoute>
           } />
+          <Route path="/admin/category-management" element={<ProtectedRoute><CategoryManagement /></ProtectedRoute>} />
+          <Route path="/admin/create-category" element={<ProtectedRoute><CreateCategory /></ProtectedRoute>} />
+          <Route path="/admin/edit-category/:id" element={<ProtectedRoute><EditCategory /></ProtectedRoute>} />
           <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />
         </Routes>
         <Toaster position="top-right" />
