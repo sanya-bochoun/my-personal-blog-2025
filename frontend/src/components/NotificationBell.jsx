@@ -1,62 +1,111 @@
-import React, { useState, useEffect, useRef } from 'react';
-import bellIcon from '../assets/Bell_light-v2.png';
+import React, { useState, useEffect } from 'react';
+import { BsBell } from 'react-icons/bs';
+import { AiOutlineLike, AiOutlineComment } from 'react-icons/ai';
+import { FaRegNewspaper } from 'react-icons/fa';
+import axios from 'axios';
+import { toast } from 'react-toastify';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const NotificationBell = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [activities, setActivities] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // ปิด dropdown เมื่อคลิกนอกพื้นที่
+  const fetchActivities = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_URL}/api/notifications`);
+      setActivities(response.data.data.activities);
+    } catch (error) {
+      toast.error('ไม่สามารถดึงข้อมูลกิจกรรมได้');
+      console.error('Error fetching activities:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
+    if (showDropdown) {
+      fetchActivities();
+    }
+  }, [showDropdown]);
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const getActivityIcon = (type) => {
+    switch (type) {
+      case 'post':
+        return <FaRegNewspaper className="text-blue-500" />;
+      case 'like':
+      case 'comment_like':
+        return <AiOutlineLike className="text-red-500" />;
+      case 'comment':
+        return <AiOutlineComment className="text-green-500" />;
+      default:
+        return <BsBell className="text-gray-500" />;
+    }
+  };
 
-  // ข้อมูลการแจ้งเตือนจำลอง
-  const notifications = [
-    { id: 1, message: 'มีผู้ติดตามใหม่', time: '5 นาทีที่แล้ว' },
-    { id: 2, message: 'โพสต์ของคุณได้รับไลค์', time: '10 นาทีที่แล้ว' },
-  ];
+  const getActivityMessage = (activity) => {
+    switch (activity.type) {
+      case 'post':
+        return `${activity.user_name} ได้สร้างโพสต์ใหม่: ${activity.content}`;
+      case 'like':
+        return `${activity.user_name} ถูกใจโพสต์: ${activity.content}`;
+      case 'comment':
+        return `${activity.user_name} แสดงความคิดเห็น: ${activity.content}`;
+      case 'comment_like':
+        return `${activity.user_name} ถูกใจความคิดเห็น: ${activity.content}`;
+      default:
+        return 'กิจกรรมใหม่';
+    }
+  };
 
   return (
-    <div className="relative inline-block" ref={dropdownRef}>
-      <div 
-        className="cursor-pointer p-2 text-2xl text-gray-600 hover:text-gray-800 transition-colors duration-200"
-        onClick={() => setIsOpen(!isOpen)}
+    <div className="relative">
+      <button
+        onClick={() => setShowDropdown(!showDropdown)}
+        className="p-2 hover:bg-gray-100 rounded-full"
       >
-        <img src={bellIcon} alt="notifications" className="w-[48px] h-[48px]" />
-        {/* Badge จำลอง - ค่อยเชื่อมกับระบบจริงทีหลัง */}
-        <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full px-2 py-0.5 text-xs min-w-[18px] text-center">
-          2
-        </span>
-      </div>
+        <BsBell className="text-xl" />
+      </button>
 
-      {/* Dropdown Menu */}
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-72 md:w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-          <div className="p-3 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800">การแจ้งเตือน</h3>
-          </div>
-          <div className="max-h-96 overflow-y-auto">
-            {notifications.map((notification) => (
-              <div 
-                key={notification.id}
-                className="p-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150"
-              >
-                <p className="text-sm text-gray-800">{notification.message}</p>
-                <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
+      {showDropdown && (
+        <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[80vh] overflow-y-auto z-50">
+          <div className="p-4">
+            <h3 className="text-lg font-semibold mb-4">กิจกรรมล่าสุด</h3>
+            {loading ? (
+              <div className="text-center py-4">กำลังโหลด...</div>
+            ) : activities.length === 0 ? (
+              <div className="text-center py-4 text-gray-500">ไม่มีกิจกรรมใหม่</div>
+            ) : (
+              <div className="space-y-4">
+                {activities.map((activity) => (
+                  <div
+                    key={`${activity.type}-${activity.id}`}
+                    className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors"
+                  >
+                    <div className="flex-shrink-0 mt-1">
+                      {getActivityIcon(activity.type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-800">
+                        {getActivityMessage(activity)}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {new Date(activity.created_at).toLocaleString('th-TH')}
+                      </p>
+                    </div>
+                    {activity.user_avatar && (
+                      <img
+                        src={activity.user_avatar}
+                        alt={activity.user_name}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                    )}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <div className="p-3 border-t border-gray-200">
-            <button className="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-150">
-              ดูการแจ้งเตือนทั้งหมด
-            </button>
+            )}
           </div>
         </div>
       )}

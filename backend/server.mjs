@@ -46,11 +46,28 @@ app.use('/api', limiter);
 app.use(xss());
 
 // CORS
-app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+const corsOptions = {
+  origin: function(origin, callback) {
+    const allowedOrigins = [
+      'http://localhost:5173',  // Vite dev server
+      'http://localhost:3000',  // Alternative dev port
+      process.env.FRONTEND_URL  // Production URL
+    ].filter(Boolean); // กรองค่า null/undefined ออก
+    
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
-}));
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
+};
+
+app.use(cors(corsOptions));
 
 // Body Parser Middleware
 app.use(express.json({ limit: '10kb' })); // จำกัดขนาด request body

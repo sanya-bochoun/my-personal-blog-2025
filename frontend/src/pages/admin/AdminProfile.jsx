@@ -1,15 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { toast } from 'react-toastify';
+import { useAuth } from '../../context/AuthContext';
 
 function AdminProfile() {
+  const { updateUser } = useAuth();
   const defaultAvatar = 'https://via.placeholder.com/150';
   const [formData, setFormData] = useState({
-    name: 'Thompson P.',
-    username: 'thompson',
-    email: 'thompson.p@gmail.com',
-    bio: 'I am a pet enthusiast and freelance writer who specializes in animal behavior and care. With a deep love for cats, I enjoy sharing insights on feline companionship and wellness.\n\nWhen I\'m not writing, I spends time volunteering at my local animal shelter, helping cats find loving homes.',
+    full_name: '',
+    username: '',
+    email: '',
+    bio: '',
     profilePicture: null,
     profilePicturePreview: null
   });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+  // Fetch Profile Data
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        const response = await axios.get(`${API_URL}/api/users/profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        
+        const { user } = response.data.data;
+        setFormData({
+          full_name: user.full_name || '',
+          username: user.username || '',
+          email: user.email || '',
+          bio: user.bio || '',
+          profilePicture: null,
+          profilePicturePreview: user.avatar_url || null
+        });
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        toast.error('Failed to load profile information');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -22,6 +61,11 @@ function AdminProfile() {
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast.error('Image size should be less than 5MB');
+        return;
+      }
+
       setFormData(prev => ({
         ...prev,
         profilePicture: file,
@@ -30,11 +74,83 @@ function AdminProfile() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Implement profile update
-    console.log('Updating profile:', formData);
+    setSaving(true);
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      
+      // 1. ส่งข้อมูลทั่วไป
+      const profileResponse = await axios.put(
+        `${API_URL}/api/users/profile`,
+        {
+          full_name: formData.full_name,
+          username: formData.username,
+          bio: formData.bio
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      let updatedUserData = profileResponse.data.data.user;
+
+      // 2. ถ้ามีการอัพโหลดรูปภาพ
+      if (formData.profilePicture) {
+        const imageFormData = new FormData();
+        imageFormData.append('avatar', formData.profilePicture);
+
+        const avatarResponse = await axios.post(
+          `${API_URL}/api/users/avatar`,
+          imageFormData,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'multipart/form-data'
+            }
+          }
+        );
+        
+        updatedUserData = avatarResponse.data.data.user;
+      }
+
+      // อัพเดตข้อมูลใน context
+      updateUser(updatedUserData);
+
+      // อัพเดตข้อมูลในฟอร์ม
+      setFormData({
+        full_name: updatedUserData.full_name || '',
+        username: updatedUserData.username || '',
+        email: updatedUserData.email || '',
+        bio: updatedUserData.bio || '',
+        profilePicture: null,
+        profilePicturePreview: updatedUserData.avatar_url || null
+      });
+
+      toast.success('Profile updated successfully');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to update profile';
+      toast.error(errorMessage);
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          <span className="ml-2">Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -42,9 +158,10 @@ function AdminProfile() {
         <h1 className="text-2xl font-medium text-gray-900">Profile</h1>
         <button
           onClick={handleSubmit}
-          className="px-6 py-2 text-sm font-medium text-white bg-gray-900 rounded-full hover:bg-gray-800"
+          disabled={saving}
+          className="px-[40px] py-[12px] text-sm font-medium text-white bg-gray-900 rounded-full hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Save
+          {saving ? 'Saving...' : 'Save'}
         </button>
       </div>
 
@@ -71,25 +188,27 @@ function AdminProfile() {
               Upload profile picture
             </label>
           </div>
+          <p className="text-xs text-left ml-32 text-gray-500">Maximum file size: 5MB</p>
         </div>
 
         {/* Name */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-[#75716B] mb-2 text-left">
             Name
           </label>
           <input
             type="text"
-            name="name"
-            value={formData.name}
+            name="full_name"
+            value={formData.full_name}
             onChange={handleInputChange}
             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-0 focus:border-gray-400"
+            required
           />
         </div>
 
         {/* Username */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-[#75716B] mb-2 text-left">
             Username
           </label>
           <input
@@ -98,27 +217,24 @@ function AdminProfile() {
             value={formData.username}
             onChange={handleInputChange}
             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-0 focus:border-gray-400"
+            required
           />
         </div>
 
         {/* Email */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-[#75716B] mb-2 text-left">
             Email
           </label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleInputChange}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-0 focus:border-gray-400"
-          />
+          <div className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-500 text-left">
+            {formData.email}
+          </div>
         </div>
 
         {/* Bio */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Bio (max 120 letters)
+          <label className="block text-sm font-medium text-[#75716B] mb-2 text-left">
+            Bio (max 120 characters)
           </label>
           <textarea
             name="bio"
