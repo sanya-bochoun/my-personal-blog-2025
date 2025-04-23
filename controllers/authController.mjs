@@ -115,10 +115,28 @@ const login = async (req, res) => {
     
     // ตรวจสอบว่าใช้ email หรือ username ในการล็อกอิน
     if (email) {
-      query = 'SELECT id, username, email, password, role, full_name FROM users WHERE email = $1';
+      query = `
+        SELECT 
+          id, username, email, password, role, full_name, is_locked,
+          CASE 
+            WHEN is_locked = true THEN 'locked'
+            ELSE 'active'
+          END as status
+        FROM users 
+        WHERE email = $1
+      `;
       params = [email];
     } else if (username) {
-      query = 'SELECT id, username, email, password, role, full_name FROM users WHERE username = $1';
+      query = `
+        SELECT 
+          id, username, email, password, role, full_name, is_locked,
+          CASE 
+            WHEN is_locked = true THEN 'locked'
+            ELSE 'active'
+          END as status
+        FROM users 
+        WHERE username = $1
+      `;
       params = [username];
     } else {
       return res.status(400).json({
@@ -138,6 +156,14 @@ const login = async (req, res) => {
     }
 
     const user = result.rows[0];
+
+    // ตรวจสอบว่าบัญชีถูกล็อคหรือไม่
+    if (user.is_locked) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ'
+      });
+    }
 
     // ตรวจสอบรหัสผ่าน
     const passwordMatch = await bcrypt.compare(password, user.password);
@@ -165,7 +191,7 @@ const login = async (req, res) => {
 
     // บันทึก refresh token ลงฐานข้อมูล
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 วัน
+    expiresAt.setDate(expiresAt.getDate() + 7);
     
     await db.query(
       `INSERT INTO refresh_tokens (user_id, token, expires_at)
@@ -189,7 +215,8 @@ const login = async (req, res) => {
           username: user.username,
           email: user.email,
           role: user.role,
-          full_name: user.full_name
+          full_name: user.full_name,
+          status: user.status
         },
         accessToken,
         refreshToken

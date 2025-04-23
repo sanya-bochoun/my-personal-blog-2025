@@ -6,6 +6,7 @@ import categoryRoutes from './categoryRoutes.mjs';
 import commentRoutes from './commentRoutes.mjs';
 import tagRoutes from './tagRoutes.mjs';
 import adminCategoryRoutes from './admin/categoryRoutes.mjs';
+import userManagementRoutes from './userManagement.mjs';
 
 const router = express.Router();
 
@@ -19,6 +20,7 @@ router.use('/tags', tagRoutes);
 
 // Admin routes
 router.use('/admin/categories', adminCategoryRoutes);
+router.use('/admin/users', userManagementRoutes);
 
 // Health check
 router.get('/health', (req, res) => {

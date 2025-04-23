@@ -75,4 +75,12 @@ export const authorizeAdmin = (req, res, next) => {
       message: 'เกิดข้อผิดพลาดในการตรวจสอบสิทธิ์'
     });
   }
+};
+
+export const authorizeEditorOrAdmin = (req, res, next) => {
+    if (req.user && (req.user.role === 'admin' || req.user.role === 'editor')) {
+        next();
+    } else {
+        res.status(403).json({ error: 'ไม่มีสิทธิ์เข้าถึง' });
+    }
 }; 

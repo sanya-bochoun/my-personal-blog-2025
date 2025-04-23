@@ -1,12 +1,16 @@
 import express from 'express';
-import { authenticateToken, checkRole } from '../../middleware/authMiddleware.mjs';
+import { Category } from '../../models/Category.mjs';
+import { authenticateToken, authorizeEditorOrAdmin } from '../../middleware/auth.mjs';
 import pool from '../../utils/db.mjs';
 import { slugify } from '../../utils/helpers.mjs';
 
 const router = express.Router();
 
+// ตรวจสอบการยืนยันตัวตนและสิทธิ์
+router.use(authenticateToken, authorizeEditorOrAdmin);
+
 // Create category
-router.post('/', authenticateToken, checkRole(['admin']), async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         const { name, description } = req.body;
 
@@ -55,27 +59,18 @@ router.post('/', authenticateToken, checkRole(['admin']), async (req, res) => {
 });
 
 // Get all categories
-router.get('/', authenticateToken, checkRole(['admin']), async (req, res) => {
+router.get('/', async (req, res) => {
     try {
-        const result = await pool.query(
-            'SELECT * FROM categories ORDER BY created_at DESC'
-        );
-
-        res.json({
-            status: 'success',
-            data: result.rows
-        });
-    } catch (err) {
-        console.error('Error fetching categories:', err);
-        res.status(500).json({
-            status: 'error',
-            message: 'เกิดข้อผิดพลาดในการดึงข้อมูลหมวดหมู่'
-        });
+        const categories = await Category.findAll();
+        res.json(categories);
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
 // Search categories
-router.get('/search', authenticateToken, checkRole(['admin']), async (req, res) => {
+router.get('/search', async (req, res) => {
     try {
         const { q } = req.query;
         
@@ -111,7 +106,7 @@ router.get('/search', authenticateToken, checkRole(['admin']), async (req, res) 
 });
 
 // Get single category
-router.get('/:id', authenticateToken, checkRole(['admin']), async (req, res) => {
+router.get('/:id', async (req, res) => {
     try {
         const { id } = req.params;
         
@@ -141,104 +136,45 @@ router.get('/:id', authenticateToken, checkRole(['admin']), async (req, res) => 
 });
 
 // Update category
-router.put('/:id', authenticateToken, checkRole(['admin']), async (req, res) => {
+router.put('/:id', async (req, res) => {
     try {
-        const { id } = req.params;
         const { name, description } = req.body;
-
-        // Validation
+        const { id } = req.params;
+        
         if (!name) {
-            return res.status(400).json({
-                status: 'error',
-                message: 'กรุณาระบุชื่อหมวดหมู่'
-            });
+            return res.status(400).json({ error: 'Category name is required' });
         }
-
-        // Check if category exists (excluding current category)
-        const categoryExists = await pool.query(
-            'SELECT * FROM categories WHERE name = $1 AND id != $2',
-            [name, id]
-        );
-
-        if (categoryExists.rows.length > 0) {
-            return res.status(409).json({
-                status: 'error',
-                message: 'ชื่อหมวดหมู่นี้มีอยู่ในระบบแล้ว'
-            });
+        
+        const category = await Category.update(id, { name, description });
+        
+        if (!category) {
+            return res.status(404).json({ error: 'Category not found' });
         }
-
-        // Create slug
-        const slug = slugify(name);
-
-        // Update category
-        const updatedCategory = await pool.query(
-            'UPDATE categories SET name = $1, slug = $2, description = $3, updated_at = CURRENT_TIMESTAMP WHERE id = $4 RETURNING *',
-            [name, slug, description, id]
-        );
-
-        if (updatedCategory.rows.length === 0) {
-            return res.status(404).json({
-                status: 'error',
-                message: 'ไม่พบหมวดหมู่ที่ต้องการแก้ไข'
-            });
-        }
-
-        res.json({
-            status: 'success',
-            data: updatedCategory.rows[0]
-        });
-
-    } catch (err) {
-        console.error('Error updating category:', err);
-        res.status(500).json({
-            status: 'error',
-            message: 'เกิดข้อผิดพลาดในการแก้ไขหมวดหมู่'
-        });
+        
+        res.json(category);
+    } catch (error) {
+        console.error('Error updating category:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
 // Delete category
-router.delete('/:id', authenticateToken, checkRole(['admin']), async (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-
-        // Check if category is being used
-        const postsUsingCategory = await pool.query(
-            'SELECT COUNT(*) FROM posts WHERE category_id = $1',
-            [id]
-        );
-
-        if (parseInt(postsUsingCategory.rows[0].count) > 0) {
-            return res.status(400).json({
-                status: 'error',
-                message: 'ไม่สามารถลบหมวดหมู่นี้ได้เนื่องจากมีบทความที่ใช้หมวดหมู่นี้อยู่'
-            });
+        const success = await Category.destroy(id);
+        
+        if (!success) {
+            return res.status(404).json({ error: 'Category not found' });
         }
-
-        // Delete category
-        const result = await pool.query(
-            'DELETE FROM categories WHERE id = $1 RETURNING *',
-            [id]
-        );
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({
-                status: 'error',
-                message: 'ไม่พบหมวดหมู่ที่ต้องการลบ'
-            });
+        
+        res.json({ message: 'Category deleted successfully' });
+    } catch (error) {
+        if (error.message === 'ไม่สามารถลบหมวดหมู่ที่มีบทความอยู่ได้') {
+            return res.status(400).json({ error: error.message });
         }
-
-        res.json({
-            status: 'success',
-            message: 'ลบหมวดหมู่เรียบร้อยแล้ว'
-        });
-
-    } catch (err) {
-        console.error('Error deleting category:', err);
-        res.status(500).json({
-            status: 'error',
-            message: 'เกิดข้อผิดพลาดในการลบหมวดหมู่'
-        });
+        console.error('Error deleting category:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
