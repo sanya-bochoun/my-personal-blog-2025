@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import db from '../utils/db.mjs';
+import pool from '../utils/db.mjs';
 
 dotenv.config();
 
@@ -54,7 +54,7 @@ const checkRole = (roles) => {
       }
       
       // ดึงข้อมูลผู้ใช้จากฐานข้อมูล
-      const result = await db.query('SELECT role FROM users WHERE id = $1', [req.userId]);
+      const result = await pool.query('SELECT role FROM users WHERE id = $1', [req.userId]);
       
       if (result.rows.length === 0) {
         return res.status(404).json({ 
@@ -115,7 +115,7 @@ const checkOwnership = (paramName, tableName, ownerField) => {
       
       // ตรวจสอบจากฐานข้อมูล
       const query = `SELECT ${ownerField} FROM ${tableName} WHERE id = $1`;
-      const result = await db.query(query, [itemId]);
+      const result = await pool.query(query, [itemId]);
       
       if (result.rows.length === 0) {
         return res.status(404).json({ 
@@ -165,7 +165,7 @@ export const protect = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // ดึงข้อมูลผู้ใช้จากฐานข้อมูล
-    const result = await db.query(
+    const result = await pool.query(
       'SELECT id, email, role FROM users WHERE id = $1',
       [decoded.userId]
     );
