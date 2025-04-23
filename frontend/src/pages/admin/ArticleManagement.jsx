@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { FiEdit2, FiTrash2 } from 'react-icons/fi';
 
 function ArticleManagement() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -136,7 +137,7 @@ function ArticleManagement() {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-200 rounded-lg bg-white"
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg bg-white cursor-pointer"
           >
             <option value="">Status</option>
             <option value="published">Published</option>
@@ -146,7 +147,7 @@ function ArticleManagement() {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-200 rounded-lg bg-white"
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg bg-white cursor-pointer"
           >
             <option value="">Category</option>
             {categories.map(category => (
@@ -156,30 +157,6 @@ function ArticleManagement() {
             ))}
           </select>
         </div>
-
-        {/* Delete Confirmation Modal */}
-        {showDeleteModal && (
-          <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
-            <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 w-[400px] shadow-xl">
-              <h2 className="text-xl font-semibold mb-4">Delete article</h2>
-              <p className="text-gray-600 mb-6">Do you want to delete this article?</p>
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={handleCancelDelete}
-                  className="px-6 py-2 text-sm font-medium text-gray-700 bg-white/80 border border-gray-300 rounded-full hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDeleteArticle}
-                  className="px-6 py-2 text-sm font-medium text-white bg-red-600/90 rounded-full hover:bg-red-700"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Articles Table */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -200,7 +177,7 @@ function ArticleManagement() {
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-gray-200 text-left">
               {filteredArticles.map(article => (
                 <tr key={article.id}>
                   <td className="px-6 py-4">
@@ -221,18 +198,20 @@ function ArticleManagement() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm font-medium">
-                    <Link
-                      to={`/admin/edit-article/${article.id}`}
-                      className="text-indigo-600 hover:text-indigo-900 mr-4"
-                    >
-                      Edit
-                    </Link>
-                    <button
-                      onClick={() => handleDeleteClick(article)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Delete
-                    </button>
+                    <div className="flex items-center space-x-4">
+                      <Link
+                        to={`/admin/edit-article/${article.id}`}
+                        className="text-gray-600 hover:text-gray-900"
+                      >
+                        <FiEdit2 className="w-5 h-5" />
+                      </Link>
+                      <button
+                        onClick={() => handleDeleteClick(article)}
+                        className="text-gray-600 hover:text-gray-900 cursor-pointer"
+                      >
+                        <FiTrash2 className="w-5 h-5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -240,6 +219,30 @@ function ArticleManagement() {
           </table>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 w-[400px] shadow-xl">
+            <h2 className="text-xl font-semibold mb-4">Delete article</h2>
+            <p className="text-gray-600 mb-6">Do you want to delete this article?</p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={handleCancelDelete}
+                className="px-6 py-2 text-sm font-medium text-gray-700 bg-white/80 border border-gray-300 rounded-full hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteArticle}
+                className="px-6 py-2 text-sm font-medium text-white bg-red-600/90 rounded-full hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

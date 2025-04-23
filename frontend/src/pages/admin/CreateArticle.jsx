@@ -5,10 +5,12 @@ import { IoChevronDownOutline } from "react-icons/io5";
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { FiLoader } from 'react-icons/fi';
 
 function AdminCreateArticle() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
     title: '',
@@ -17,7 +19,7 @@ function AdminCreateArticle() {
     categoryId: '',
     thumbnailImage: null,
     thumbnailPreview: null,
-    authorName: ''
+    authorName: user?.name || user?.username || ''
   });
 
   useEffect(() => {
@@ -84,12 +86,12 @@ function AdminCreateArticle() {
 
   const handleSaveAsDraft = async () => {
     try {
-      // Check if title and category are provided
       if (!formData.title.trim() || !formData.categoryId) {
         toast.error('กรุณากรอกชื่อบทความและเลือกหมวดหมู่');
         return;
       }
 
+      setIsLoading(true);
       const token = localStorage.getItem('accessToken');
       if (!token) {
         toast.error('กรุณาเข้าสู่ระบบ');
@@ -115,7 +117,9 @@ function AdminCreateArticle() {
 
       if (response.data.success) {
         toast.success('บันทึกแบบร่างสำเร็จ');
-        navigate('/admin/articles');
+        setTimeout(() => {
+          navigate('/admin/article-management');
+        }, 1000);
       }
     } catch (error) {
       console.error('Error saving draft:', error);
@@ -125,17 +129,19 @@ function AdminCreateArticle() {
       } else {
         toast.error('ไม่สามารถบันทึกแบบร่างได้');
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handlePublish = async () => {
     try {
-      // Validate all required fields
-      if (!formData.title.trim() || !formData.categoryId || !formData.introduction?.trim() || !formData.content?.trim() || !formData.thumbnailImage) {
+      if (!formData.title.trim() || !formData.categoryId || !formData.introduction?.trim() || !formData.content?.trim()) {
         toast.error('กรุณากรอกข้อมูลให้ครบถ้วน');
         return;
       }
 
+      setIsLoading(true);
       const token = localStorage.getItem('accessToken');
       if (!token) {
         toast.error('กรุณาเข้าสู่ระบบ');
@@ -149,7 +155,9 @@ function AdminCreateArticle() {
       form.append('content', formData.content.trim());
       form.append('category_id', formData.categoryId);
       form.append('status', 'published');
-      form.append('thumbnail_image', formData.thumbnailImage);
+      if (formData.thumbnailImage) {
+        form.append('thumbnail_image', formData.thumbnailImage);
+      }
 
       const response = await axios.post('http://localhost:5000/api/admin/articles', form, {
         headers: {
@@ -159,7 +167,9 @@ function AdminCreateArticle() {
 
       if (response.data.success) {
         toast.success('บันทึกและเผยแพร่บทความสำเร็จ');
-        navigate('/admin/articles');
+        setTimeout(() => {
+          navigate('/admin/article-management');
+        }, 1000);
       }
     } catch (error) {
       console.error('Error publishing:', error);
@@ -169,6 +179,8 @@ function AdminCreateArticle() {
       } else {
         toast.error('ไม่สามารถเผยแพร่บทความได้');
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -182,14 +194,18 @@ function AdminCreateArticle() {
             <div className="flex gap-2">
               <button
                 onClick={handleSaveAsDraft}
-                className="px-[40px] py-[12px] text-sm font-medium text-[#26231E] bg-white border border-gray-300 rounded-full hover:bg-gray-50"
+                disabled={isLoading}
+                className={`px-[40px] py-[12px] text-sm font-medium text-[#26231E] bg-white border border-gray-300 rounded-full hover:bg-gray-50 flex items-center ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
+                {isLoading ? <FiLoader className="animate-spin mr-2" /> : null}
                 Save as draft
               </button>
               <button
                 onClick={handlePublish}
-                className="px-[40px] py-[12px] text-sm font-medium text-white bg-[#26231E] rounded-full hover:bg-gray-800"
+                disabled={isLoading}
+                className={`px-[40px] py-[12px] text-sm font-medium text-white bg-[#26231E] rounded-full hover:bg-gray-800 flex items-center ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
+                {isLoading ? <FiLoader className="animate-spin mr-2" /> : null}
                 Save and publish
               </button>
             </div>

@@ -106,7 +106,7 @@ function AdminLayout() {
           </Link>
           <button
             onClick={handleLogout}
-            className="flex items-center mt-4 text-sm text-gray-600 hover:text-gray-900"
+            className="cursor-pointer flex items-center mt-4 text-sm text-gray-600 hover:text-gray-900"
           >
             <FiLogOut className="w-5 h-5 mr-3" />
             Log out

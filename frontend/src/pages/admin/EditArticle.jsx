@@ -5,11 +5,13 @@ import { IoChevronDownOutline } from "react-icons/io5";
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { FiLoader } from 'react-icons/fi';
 
 function EditArticle() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
     title: '',
@@ -118,6 +120,7 @@ function EditArticle() {
         return;
       }
 
+      setIsLoading(true);
       const token = localStorage.getItem('accessToken');
       if (!token) {
         toast.error('กรุณาเข้าสู่ระบบ');
@@ -143,7 +146,9 @@ function EditArticle() {
 
       if (response.data.success) {
         toast.success('บันทึกแบบร่างสำเร็จ');
-        navigate('/admin/articles');
+        setTimeout(() => {
+          navigate('/admin/article-management');
+        }, 1000);
       }
     } catch (error) {
       console.error('Error saving draft:', error);
@@ -153,6 +158,8 @@ function EditArticle() {
       } else {
         toast.error('ไม่สามารถบันทึกแบบร่างได้');
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -163,6 +170,7 @@ function EditArticle() {
         return;
       }
 
+      setIsLoading(true);
       const token = localStorage.getItem('accessToken');
       if (!token) {
         toast.error('กรุณาเข้าสู่ระบบ');
@@ -188,7 +196,9 @@ function EditArticle() {
 
       if (response.data.success) {
         toast.success('บันทึกและเผยแพร่บทความสำเร็จ');
-        navigate('/admin/articles');
+        setTimeout(() => {
+          navigate('/admin/article-management');
+        }, 1000);
       }
     } catch (error) {
       console.error('Error publishing:', error);
@@ -198,6 +208,8 @@ function EditArticle() {
       } else {
         toast.error('ไม่สามารถเผยแพร่บทความได้');
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -211,14 +223,18 @@ function EditArticle() {
             <div className="flex gap-2">
               <button
                 onClick={handleSaveAsDraft}
-                className="px-[40px] py-[12px] text-sm font-medium text-[#26231E] bg-white border border-gray-300 rounded-full hover:bg-gray-50"
+                disabled={isLoading}
+                className={`cursor-pointer px-[40px] py-[12px] text-sm font-medium text-[#26231E] bg-white border border-gray-300 rounded-full hover:bg-gray-50 flex items-center ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
+                {isLoading ? <FiLoader className="animate-spin mr-2" /> : null}
                 Save as draft
               </button>
               <button
                 onClick={handlePublish}
-                className="px-[40px] py-[12px] text-sm font-medium text-white bg-[#26231E] rounded-full hover:bg-gray-800"
+                disabled={isLoading}
+                className={`cursor-pointer px-[40px] py-[12px] text-sm font-medium text-white bg-[#26231E] rounded-full hover:bg-gray-800 flex items-center ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
+                {isLoading ? <FiLoader className="animate-spin mr-2" /> : null}
                 Save and publish
               </button>
             </div>
