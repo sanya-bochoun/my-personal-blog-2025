@@ -11,6 +11,8 @@ function CategoryManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
 
   // ดึงข้อมูล categories
   const fetchCategories = async () => {
@@ -53,22 +55,29 @@ function CategoryManagement() {
     }
   };
 
+  // แสดง modal ยืนยันการลบ
+  const handleDeleteClick = (id) => {
+    setSelectedCategoryId(id);
+    setShowDeleteModal(true);
+  };
+
   // ลบ category
-  const handleDelete = async (id) => {
-    if (window.confirm('คุณแน่ใจหรือไม่ที่จะลบหมวดหมู่นี้?')) {
-      try {
-        const token = localStorage.getItem('accessToken');
-        await axios.delete(`http://localhost:5000/api/admin/categories/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        toast.success('ลบหมวดหมู่เรียบร้อยแล้ว');
-        fetchCategories(); // ดึงข้อมูลใหม่หลังจากลบ
-      } catch (error) {
-        console.error('Error deleting category:', error);
-        toast.error(error.response?.data?.message || 'ไม่สามารถลบหมวดหมู่ได้');
-      }
+  const handleConfirmDelete = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      await axios.delete(`http://localhost:5000/api/admin/categories/${selectedCategoryId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      toast.success('ลบหมวดหมู่เรียบร้อยแล้ว');
+      fetchCategories();
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      toast.error(error.response?.data?.message || 'ไม่สามารถลบหมวดหมู่ได้');
+    } finally {
+      setShowDeleteModal(false);
+      setSelectedCategoryId(null);
     }
   };
 
@@ -119,7 +128,7 @@ function CategoryManagement() {
       {/* Categories List */}
       <div className="bg-gray-50 rounded-lg overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-sm font-medium text-gray-700">Category</h2>
+          <h2 className="text-left text-medium font-medium text-gray-700">Category</h2>
         </div>
         <div className="divide-y divide-gray-200">
           {loading ? (
@@ -138,7 +147,7 @@ function CategoryManagement() {
                     <FiEdit2 className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDelete(category.id)}
+                    onClick={() => handleDeleteClick(category.id)}
                     className="p-1.5 text-gray-500 hover:text-red-600 transition-colors"
                   >
                     <FiTrash2 className="w-4 h-4" />
@@ -149,6 +158,38 @@ function CategoryManagement() {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-[#F5F5F5] bg-opacity-20 backdrop-blur-[2px] flex items-center justify-center z-50">
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-6 w-[400px] shadow-lg">
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-xl font-medium">Delete category</h2>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ×
+              </button>
+            </div>
+            <p className="text-gray-600 mb-6">Do you want to delete this category?</p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-[999px] hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-[999px] hover:bg-gray-800"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
