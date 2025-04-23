@@ -28,6 +28,7 @@ import Notification from './pages/admin/Notification'
 import AdminResetPassword from './pages/admin/ResetPassword'
 import UserManagement from './pages/admin/UserManagement'
 import AdminResetUserPassword from './pages/admin/AdminResetUserPassword'
+import CreateArticle from './pages/CreateArticle'
 
 // สร้าง Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -100,6 +101,11 @@ function App() {
           <Route path="/article-management" element={
             <ProtectedRoute>
               <MainLayout><ArticleManagement /></MainLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/create-article" element={
+            <ProtectedRoute>
+              <MainLayout><CreateArticle /></MainLayout>
             </ProtectedRoute>
           } />
           <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />

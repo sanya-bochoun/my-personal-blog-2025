@@ -1,17 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import defaultThumbnail from '../../assets/default-thumbnail.jpg';
+import defaultThumbnail from '../../assets/Img_box_light.png';
+import { IoChevronDownOutline } from "react-icons/io5";
+import { useAuth } from '../../context/AuthContext';
 
-function CreateArticle() {
+function AdminCreateArticle() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     introduction: '',
     content: '',
     category: '',
     thumbnailImage: null,
-    thumbnailPreview: null
+    thumbnailPreview: null,
+    authorName: ''
   });
+
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        authorName: user.name || user.username
+      }));
+    }
+  }, [user]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -33,145 +46,174 @@ function CreateArticle() {
   };
 
   const handleSaveAsDraft = () => {
+    // TODO: Implement save as draft functionality
     console.log('Saving as draft:', formData);
     navigate('/admin/article-management');
   };
 
   const handlePublish = () => {
+    // TODO: Implement publish functionality
     console.log('Publishing:', formData);
     navigate('/admin/article-management');
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-medium text-gray-900">Create article</h1>
-        <div className="flex gap-3">
-          <button
-            onClick={handleSaveAsDraft}
-            className="px-6 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-full hover:bg-gray-50"
-          >
-            Save as draft
-          </button>
-          <button
-            onClick={handlePublish}
-            className="px-6 py-2 text-sm font-medium text-white bg-gray-900 rounded-full hover:bg-gray-800"
-          >
-            Save and publish
-          </button>
+    <div className="min-h-screen bg-[#F9F8F6]">
+      {/* Header */}
+      <div className="border-b border-gray-200 bg-[#F9F8F6]">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex justify-between items-center">
+            <h1 className="text-xl font-medium text-[#26231E]">Create article</h1>
+            <div className="flex gap-2">
+              <button
+                onClick={handleSaveAsDraft}
+                className="px-[40px] py-[12px] text-sm font-medium text-[#26231E] bg-white border border-gray-300 rounded-full hover:bg-gray-50"
+              >
+                Save as draft
+              </button>
+              <button
+                onClick={handlePublish}
+                className="px-[40px] py-[12px] text-sm font-medium text-white bg-[#26231E] rounded-full hover:bg-gray-800"
+              >
+                Save and publish
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="space-y-6">
-        {/* Thumbnail Image */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Thumbnail image
-          </label>
-          <div className="relative">
-            <div className="bg-gray-100 rounded-lg overflow-hidden mb-3" style={{ height: '156px' }}>
-              <img
-                src={formData.thumbnailPreview || defaultThumbnail}
-                alt="Thumbnail preview"
-                className="w-full h-full object-contain"
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="space-y-8">
+          {/* Thumbnail Image */}
+          <div>
+            <label className="block text-base font-medium text-[#75716B] mb-3 text-left">
+              Thumbnail image
+            </label>
+            <div className="flex gap-6">
+              <div 
+                className="bg-[#EFEEEB] rounded-xl shadow-sm w-[460px] h-[260px] border-2 border-dashed border-[#DAD6D1] cursor-pointer"
+                onClick={() => document.getElementById('thumbnail-upload').click()}
+              >
+                <div className="relative h-full flex items-center justify-center">
+                  <img
+                    src={formData.thumbnailPreview || defaultThumbnail}
+                    alt=""
+                    className={`rounded-xl ${formData.thumbnailPreview ? 'w-full h-full object-cover' : 'w-[40px] h-[40px]'}`}
+                  />
+                </div>
+              </div>
+              <div className="flex items-end h-[260px] ml-4">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  id="thumbnail-upload"
+                />
+                <label
+                  htmlFor="thumbnail-upload"
+                  className="px-[40px] py-[12px] text-sm font-medium text-[#26231E] bg-white border border-gray-300 rounded-full hover:bg-gray-50 cursor-pointer"
+                >
+                  Upload thumbnail image
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Category */}
+          <div>
+            <label className="block text-base font-medium text-[#75716B] mb-3 text-left">
+              Category
+            </label>
+            <div className="bg-[#F9F8F6] -ml-4 relative">
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleInputChange}
+                className="text-[#75716B] w-[480px] h-[48px] px-4 py-2.5 ml-[-470px] text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200 appearance-none bg-white"
+              >
+                <option value="">Select category</option>
+                <option value="Cat">Cat</option>
+                <option value="General">General</option>
+                <option value="Inspiration">Inspiration</option>
+              </select>
+              <div className="absolute right-4 sm:right-[500px] top-1/2 transform -translate-y-1/2 pointer-events-none">
+                <IoChevronDownOutline className="text-[#75716B] w-6 h-6" />
+              </div>
+            </div>
+          </div>
+
+          {/* Author Name */}
+          <div>
+            <label className="block text-base font-medium text-[#75716B] mb-3 text-left">
+              Author name
+            </label>
+            <div className="bg-[#F9F8F6] -ml-4">
+              <input
+                type="text"
+                name="authorName"
+                value={formData.authorName}
+                className="text-[#75716B] ml-[-470px] w-[480px] h-[48px] px-4 py-2.5 text-base border border-gray-300 rounded-lg bg-[#EFEEEB] cursor-not-allowed"
+                disabled
               />
             </div>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
-              id="thumbnail-upload"
-            />
-            <label
-              htmlFor="thumbnail-upload"
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-full hover:bg-gray-50 cursor-pointer"
-            >
-              Upload thumbnail image
-            </label>
           </div>
-        </div>
 
-        {/* Category */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Category
-          </label>
-          <select
-            name="category"
-            value={formData.category}
-            onChange={handleInputChange}
-            className="w-full px-4 py-2.5 text-gray-500 bg-white border border-gray-300 rounded-lg focus:ring-0 focus:border-gray-400"
-          >
-            <option value="">Select category</option>
-            <option value="Cat">Cat</option>
-            <option value="General">General</option>
-            <option value="Inspiration">Inspiration</option>
-          </select>
-        </div>
+          {/* Title */}
+          <div>
+            <label className="block text-base font-medium text-[#75716B] mb-3 text-left">
+              Title
+            </label>
+            <div className="bg-[#F9F8F6] -ml-4">
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                placeholder="Article title"
+                className="bg-white ml-[10px] w-[960px] h-[48px] px-4 py-2.5 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200"
+              />
+            </div>
+          </div>
 
-        {/* Author name */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Author name
-          </label>
-          <input
-            type="text"
-            name="authorName"
-            value="Thompson P."
-            disabled
-            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-500"
-          />
-        </div>
+          {/* Introduction */}
+          <div>
+            <label className="block text-base font-medium text-[#75716B] mb-3 text-left">
+              Introduction (max 120 letters)
+            </label>
+            <div className="bg-[#F9F8F6] -ml-4">
+              <textarea
+                name="introduction"
+                value={formData.introduction}
+                onChange={handleInputChange}
+                maxLength={120}
+                rows={3}
+                placeholder="Write a brief introduction"
+                className="bg-white ml-[10px] w-[960px] min-h-[143px] px-4 py-2.5 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200 resize-y"
+              />
+            </div>
+          </div>
 
-        {/* Title */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Title
-          </label>
-          <input
-            type="text"
-            name="title"
-            value={formData.title}
-            onChange={handleInputChange}
-            placeholder="Article title"
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-0 focus:border-gray-400"
-          />
-        </div>
-
-        {/* Introduction */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Introduction (max 120 letters)
-          </label>
-          <textarea
-            name="introduction"
-            value={formData.introduction}
-            onChange={handleInputChange}
-            maxLength={120}
-            rows={3}
-            placeholder="Introduction"
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-0 focus:border-gray-400 resize-none"
-          />
-        </div>
-
-        {/* Content */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Content
-          </label>
-          <textarea
-            name="content"
-            value={formData.content}
-            onChange={handleInputChange}
-            rows={8}
-            placeholder="Content"
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-0 focus:border-gray-400 resize-none"
-          />
+          {/* Content */}
+          <div>
+            <label className="block text-base font-medium text-[#75716B] mb-3 text-left">
+              Content
+            </label>
+            <div className="bg-[#F9F8F6] -ml-4">
+              <textarea
+                name="content"
+                value={formData.content}
+                onChange={handleInputChange}
+                rows={10}
+                placeholder="Write your article content"
+                className="bg-white ml-[10px] w-[960px] min-h-[572px] px-4 py-2.5 mb-30 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200 resize-y"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-export default CreateArticle; 
+export default AdminCreateArticle; 

@@ -1,17 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import defaultThumbnail from '../assets/default-thumbnail.jpg';
+import defaultThumbnail from '../assets/Img_box_light.png';
+import { IoChevronDownOutline } from "react-icons/io5";
+import { useAuth } from '../context/AuthContext';
 
 function CreateArticle() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     introduction: '',
     content: '',
-    category: 'Cat',
+    category: '',
     thumbnailImage: null,
-    thumbnailPreview: null
+    thumbnailPreview: null,
+    authorName: ''
   });
+
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        authorName: user.name || user.username
+      }));
+    }
+  }, [user]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -45,117 +58,157 @@ function CreateArticle() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9F9F9] pt-16 pb-20 sm:pt-20 sm:pb-20 sm:mt-10">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header - Stack buttons on mobile */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-6 mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Create article</h1>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-2 w-full sm:w-auto">
-            <button
-              onClick={handleSaveAsDraft}
-              className="w-full sm:w-auto px-6 py-2.5 text-base sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-full hover:bg-gray-50 active:bg-gray-100 transition-colors"
-            >
-              Save as draft
-            </button>
-            <button
-              onClick={handlePublish}
-              className="w-full sm:w-auto px-6 py-2.5 text-base sm:text-sm font-medium text-white bg-[#26231E] rounded-full hover:bg-gray-800 active:bg-gray-900 transition-colors"
-            >
-              Save and publish
-            </button>
+    <div className="min-h-screen bg-[#F9F8F6] mt-30">
+      {/* Header */}
+      <div className="border-b border-gray-200 bg-[#F9F8F6]">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex justify-between items-center flex-col sm:flex-row gap-4 sm:gap-0">
+            <h1 className="text-xl font-medium text-[#26231E]">Create article</h1>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <button
+                onClick={handleSaveAsDraft}
+                className="w-full sm:w-auto px-[40px] py-[12px] text-sm font-medium text-[#26231E] bg-white border border-gray-300 rounded-full hover:bg-gray-50"
+              >
+                Save as draft
+              </button>
+              <button
+                onClick={handlePublish}
+                className="w-full sm:w-auto px-[40px] py-[12px] text-sm font-medium text-white bg-[#26231E] rounded-full hover:bg-gray-800"
+              >
+                Save and publish
+              </button>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Form */}
+      {/* Content */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-8">
           {/* Thumbnail Image */}
-          <div className="bg-white p-4 rounded-xl shadow-sm">
-            <label className="block text-base font-medium text-gray-700 mb-3">
+          <div>
+            <label className="block text-base font-medium text-[#75716B] mb-3 text-left">
               Thumbnail image
             </label>
-            <div className="relative">
-              <img
-                src={formData.thumbnailPreview || defaultThumbnail}
-                alt="Thumbnail preview"
-                className="w-full h-52 sm:h-48 object-cover rounded-lg mb-4"
-              />
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-                id="thumbnail-upload"
-              />
-              <label
-                htmlFor="thumbnail-upload"
-                className="block w-full sm:w-auto text-center px-6 py-2.5 text-base sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-full hover:bg-gray-50 active:bg-gray-100 cursor-pointer transition-colors"
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="bg-[#EFEEEB] rounded-xl shadow-sm w-full sm:w-[460px] h-[260px] border-2 border-dashed border-[#DAD6D1] cursor-pointer"
+                onClick={() => document.getElementById('thumbnail-upload').click()}
               >
-                Upload thumbnail image
-              </label>
+                <div className="relative h-full flex items-center justify-center">
+                  <img
+                    src={formData.thumbnailPreview || defaultThumbnail}
+                    alt=""
+                    className={`rounded-xl ${formData.thumbnailPreview ? 'w-full h-full object-cover' : 'w-[40px] h-[40px]'}`}
+                  />
+                </div>
+              </div>
+              <div className="flex items-end sm:h-[260px] ml-0 sm:ml-4">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  id="thumbnail-upload"
+                />
+                <label
+                  htmlFor="thumbnail-upload"
+                  className="w-full sm:w-auto px-[40px] py-[12px] text-sm font-medium text-[#26231E] bg-white border border-gray-300 rounded-full hover:bg-gray-50 cursor-pointer text-center"
+                >
+                  Upload thumbnail image
+                </label>
+              </div>
             </div>
           </div>
 
           {/* Category */}
-          <div className="bg-white p-4 rounded-xl shadow-sm">
-            <label className="block text-base font-medium text-gray-700 mb-3">
+          <div>
+            <label className="block text-base font-medium text-[#75716B] mb-3 text-left">
               Category
             </label>
-            <select
-              name="category"
-              value={formData.category}
-              onChange={handleInputChange}
-              className="w-full px-4 py-2.5 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200 appearance-none bg-white"
-            >
-              <option value="Cat">Cat</option>
-              <option value="General">General</option>
-              <option value="Inspiration">Inspiration</option>
-            </select>
+            <div className="bg-[#F9F8F6] -ml-0 sm:-ml-4 relative">
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleInputChange}
+                className="text-[#75716B] w-full sm:w-[480px] h-[48px] px-4 py-2.5 sm:ml-[-470px] text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200 appearance-none bg-white"
+              >
+                <option value="">Select category</option>
+                <option value="Cat">Cat</option>
+                <option value="General">General</option>
+                <option value="Inspiration">Inspiration</option>
+              </select>
+              <div className="absolute right-4 sm:right-[500px] top-1/2 transform -translate-y-1/2 pointer-events-none">
+                <IoChevronDownOutline className="text-[#75716B] w-6 h-6" />
+              </div>
+            </div>
+          </div>
+
+          {/* Author Name */}
+          <div>
+            <label className="block text-base font-medium text-[#75716B] mb-3 text-left">
+              Author name
+            </label>
+            <div className="bg-[#F9F8F6] -ml-0 sm:-ml-4">
+              <input
+                type="text"
+                name="authorName"
+                value={formData.authorName}
+                className="text-[#75716B] w-full sm:w-[480px] h-[48px] px-4 py-2.5 sm:ml-[-470px] text-base border border-gray-300 rounded-lg bg-[#EFEEEB] cursor-not-allowed"
+                disabled
+              />
+            </div>
           </div>
 
           {/* Title */}
-          <div className="bg-white p-4 rounded-xl shadow-sm">
-            <label className="block text-base font-medium text-gray-700 mb-3">
+          <div>
+            <label className="block text-base font-medium text-[#75716B] mb-3 text-left">
               Title
             </label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
-              placeholder="Enter article title"
-              className="w-full px-4 py-2.5 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200"
-            />
+            <div className="bg-[#F9F8F6] -ml-0 sm:-ml-4">
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                placeholder="Article title"
+                className="bg-white w-full sm:w-[960px] h-[48px] px-4 py-2.5 sm:ml-[10px] text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200"
+              />
+            </div>
           </div>
 
           {/* Introduction */}
-          <div className="bg-white p-4 rounded-xl shadow-sm">
-            <label className="block text-base font-medium text-gray-700 mb-3">
+          <div>
+            <label className="block text-base font-medium text-[#75716B] mb-3 text-left">
               Introduction (max 120 letters)
             </label>
-            <textarea
-              name="introduction"
-              value={formData.introduction}
-              onChange={handleInputChange}
-              maxLength={120}
-              rows={3}
-              placeholder="Write a brief introduction"
-              className="w-full px-4 py-2.5 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200"
-            />
+            <div className="bg-[#F9F8F6] -ml-0 sm:-ml-4">
+              <textarea
+                name="introduction"
+                value={formData.introduction}
+                onChange={handleInputChange}
+                maxLength={120}
+                rows={3}
+                placeholder="Write a brief introduction"
+                className="bg-white w-full sm:w-[960px] min-h-[143px] px-4 py-2.5 sm:ml-[10px] text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200 resize-y"
+              />
+            </div>
           </div>
 
           {/* Content */}
-          <div className="bg-white p-4 rounded-xl shadow-sm">
-            <label className="block text-base font-medium text-gray-700 mb-3">
+          <div>
+            <label className="block text-base font-medium text-[#75716B] mb-3 text-left">
               Content
             </label>
-            <textarea
-              name="content"
-              value={formData.content}
-              onChange={handleInputChange}
-              rows={10}
-              placeholder="Write your article content"
-              className="w-full px-4 py-2.5 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200"
-            />
+            <div className="bg-[#F9F8F6] -ml-0 sm:-ml-4">
+              <textarea
+                name="content"
+                value={formData.content}
+                onChange={handleInputChange}
+                rows={10}
+                placeholder="Write your article content"
+                className="bg-white w-full sm:w-[960px] min-h-[572px] px-4 py-2.5 mb-30 sm:ml-[10px] text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200 resize-y"
+              />
+            </div>
           </div>
         </div>
       </div>
