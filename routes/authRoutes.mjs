@@ -24,8 +24,15 @@ const registerValidation = [
 ];
 
 const loginValidation = [
-  body('email').isEmail().withMessage('อีเมลไม่ถูกต้อง'),
-  body('password').notEmpty().withMessage('กรุณากรอกรหัสผ่าน')
+  body('email', 'อีเมลไม่ถูกต้อง').optional(),
+  body('username', 'กรุณากรอกชื่อผู้ใช้').optional(),
+  body().custom((value) => {
+    if (!value.email && !value.username) {
+      throw new Error('กรุณากรอกอีเมลหรือชื่อผู้ใช้');
+    }
+    return true;
+  }),
+  body('password', 'กรุณากรอกรหัสผ่าน').notEmpty()
 ];
 
 const forgotPasswordValidation = [

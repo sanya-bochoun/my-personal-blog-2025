@@ -109,13 +109,26 @@ const register = async (req, res) => {
  */
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, username, password } = req.body;
 
-    // ค้นหาผู้ใช้จากอีเมล
-    const result = await db.query(
-      'SELECT id, username, email, password, role, full_name FROM users WHERE email = $1',
-      [email]
-    );
+    let query, params;
+    
+    // ตรวจสอบว่าใช้ email หรือ username ในการล็อกอิน
+    if (email) {
+      query = 'SELECT id, username, email, password, role, full_name FROM users WHERE email = $1';
+      params = [email];
+    } else if (username) {
+      query = 'SELECT id, username, email, password, role, full_name FROM users WHERE username = $1';
+      params = [username];
+    } else {
+      return res.status(400).json({
+        status: 'error',
+        message: 'กรุณาระบุอีเมลหรือชื่อผู้ใช้'
+      });
+    }
+
+    // ค้นหาผู้ใช้
+    const result = await db.query(query, params);
 
     if (result.rows.length === 0) {
       return res.status(401).json({
