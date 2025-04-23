@@ -1,50 +1,96 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
 
 function ArticleManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [articles, setArticles] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [articleToDelete, setArticleToDelete] = useState(null);
 
-  // ข้อมูลตัวอย่าง (จะแทนที่ด้วยข้อมูลจริงจาก API ภายหลัง)
-  const articles = [
-    {
-      id: 1,
-      title: "Understanding Cat Behavior: Why Your Feline Friend Acts the Way They Do",
-      category: "Cat",
-      status: "Published"
-    },
-    {
-      id: 2,
-      title: "The Fascinating World of Cats: Why We Love Our Furry Friends",
-      category: "Cat",
-      status: "Published"
-    },
-    {
-      id: 3,
-      title: "Finding Motivation: How to Stay Inspired Through Life's Challenges",
-      category: "General",
-      status: "Published"
-    },
-    {
-      id: 4,
-      title: "The Science of the Cat's Purr: How It Benefits Cats and Humans Alike",
-      category: "Cat",
-      status: "Published"
-    },
-    {
-      id: 5,
-      title: "Top 10 Health Tips to Keep Your Cat Happy and Healthy",
-      category: "Cat",
-      status: "Published"
-    },
-    {
-      id: 6,
-      title: "Unlocking Creativity: Simple Habits to Spark Inspiration Daily",
-      category: "Inspiration",
-      status: "Published"
+  // ดึงข้อมูลบทความทั้งหมด
+  const fetchArticles = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await axios.get('http://localhost:5000/api/admin/articles', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setArticles(response.data.data);
+    } catch (error) {
+      console.error('Error fetching articles:', error);
+      toast.error('ไม่สามารถดึงข้อมูลบทความได้');
     }
-  ];
+  };
+
+  // ดึงข้อมูลหมวดหมู่
+  const fetchCategories = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await axios.get('http://localhost:5000/api/admin/categories', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (response.data.status === 'success') {
+        setCategories(response.data.data);
+      } else {
+        toast.error('ไม่สามารถดึงข้อมูลหมวดหมู่ได้');
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      toast.error('ไม่สามารถดึงข้อมูลหมวดหมู่ได้');
+    }
+  };
+
+  useEffect(() => {
+    fetchArticles();
+    fetchCategories();
+  }, []);
+
+  // แสดง modal ยืนยันการลบ
+  const handleDeleteClick = (article) => {
+    setArticleToDelete(article);
+    setShowDeleteModal(true);
+  };
+
+  // ยกเลิกการลบ
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
+    setArticleToDelete(null);
+  };
+
+  // ลบบทความ
+  const handleDeleteArticle = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      await axios.delete(`http://localhost:5000/api/admin/articles/${articleToDelete.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      toast.success('ลบบทความเรียบร้อยแล้ว');
+      fetchArticles(); // ดึงข้อมูลใหม่หลังลบ
+      setShowDeleteModal(false);
+      setArticleToDelete(null);
+    } catch (error) {
+      console.error('Error deleting article:', error);
+      toast.error('ไม่สามารถลบบทความได้');
+    }
+  };
+
+  // กรองบทความตามการค้นหา สถานะ และหมวดหมู่
+  const filteredArticles = articles.filter(article => {
+    const matchesSearch = article.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = !selectedStatus || article.status === selectedStatus;
+    const matchesCategory = !selectedCategory || article.category_id === parseInt(selectedCategory);
+    return matchesSearch && matchesStatus && matchesCategory;
+  });
 
   return (
     <div>
@@ -103,66 +149,96 @@ function ArticleManagement() {
             className="w-full px-4 py-2 border border-gray-200 rounded-lg bg-white"
           >
             <option value="">Category</option>
-            <option value="cat">Cat</option>
-            <option value="general">General</option>
-            <option value="inspiration">Inspiration</option>
+            {categories.map(category => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
           </select>
         </div>
-      </div>
 
-      {/* Articles Table */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Article title
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Category
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {articles.map((article) => (
-              <tr key={article.id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{article.title}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{article.category}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    article.status === 'Published'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {article.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button className="text-gray-400 hover:text-gray-600 mr-3">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                  </button>
-                  <button className="text-gray-400 hover:text-gray-600">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </td>
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
+            <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 w-[400px] shadow-xl">
+              <h2 className="text-xl font-semibold mb-4">Delete article</h2>
+              <p className="text-gray-600 mb-6">Do you want to delete this article?</p>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={handleCancelDelete}
+                  className="px-6 py-2 text-sm font-medium text-gray-700 bg-white/80 border border-gray-300 rounded-full hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteArticle}
+                  className="px-6 py-2 text-sm font-medium text-white bg-red-600/90 rounded-full hover:bg-red-700"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Articles Table */}
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  ARTICLE TITLE
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  CATEGORY
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  STATUS
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  ACTIONS
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredArticles.map(article => (
+                <tr key={article.id}>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-900">{article.title}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-900">
+                      {article.category_name || categories.find(c => c.id === article.category_id)?.name || 'ไม่ระบุหมวดหมู่'}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      article.status === 'published' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {article.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm font-medium">
+                    <Link
+                      to={`/admin/edit-article/${article.id}`}
+                      className="text-indigo-600 hover:text-indigo-900 mr-4"
+                    >
+                      Edit
+                    </Link>
+                    <button
+                      onClick={() => handleDeleteClick(article)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

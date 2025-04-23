@@ -1,57 +1,78 @@
 import jwt from 'jsonwebtoken';
-import { query } from '../utils/db.mjs';
+import { User } from '../models/user.mjs';
 
+// ตรวจสอบ token
 export const authenticateToken = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // รับ token จาก header
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+    
+    if (!token) {
       return res.status(401).json({
-        status: 'error',
-        message: 'No token provided'
-      });
-    }
-
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // ตรวจสอบว่า user ยังมีอยู่ในระบบหรือไม่
-    const result = await query(
-      'SELECT id, username, email, role FROM users WHERE id = $1',
-      [decoded.userId]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(401).json({
-        status: 'error',
-        message: 'User not found'
-      });
-    }
-
-    // เพิ่มข้อมูล user ไว้ใน request
-    req.user = result.rows[0];
-    next();
-  } catch (error) {
-    if (error instanceof jwt.JsonWebTokenError) {
-      return res.status(401).json({
-        status: 'error',
-        message: 'Invalid token'
+        success: false,
+        message: 'ไม่พบ Authentication token'
       });
     }
     
+    // ตรวจสอบความถูกต้องของ token
+    jwt.verify(token, process.env.JWT_SECRET, async (err, decodedToken) => {
+      if (err) {
+        return res.status(403).json({
+          success: false,
+          message: 'Token ไม่ถูกต้องหรือหมดอายุ'
+        });
+      }
+      
+      // ดึงข้อมูลผู้ใช้
+      const user = await User.findById(decodedToken.userId);
+      
+      if (!user) {
+        return res.status(403).json({
+          success: false,
+          message: 'ไม่พบบัญชีผู้ใช้'
+        });
+      }
+      
+      // เก็บข้อมูลผู้ใช้ในตัวแปล req เพื่อใช้ในขั้นตอนต่อไป
+      req.user = user;
+      next();
+    });
+  } catch (error) {
+    console.error('เกิดข้อผิดพลาดในการตรวจสอบ token:', error);
     res.status(500).json({
-      status: 'error',
-      message: 'Authentication error',
-      error: error.message
+      success: false,
+      message: 'เกิดข้อผิดพลาดในการตรวจสอบ token'
     });
   }
 };
 
-export const isAdmin = (req, res, next) => {
-  if (!req.user || req.user.role !== 'admin') {
-    return res.status(403).json({
-      status: 'error',
-      message: 'Access forbidden: Admin rights required'
+// ตรวจสอบสิทธิ์ admin
+export const authorizeAdmin = (req, res, next) => {
+  try {
+    // ตรวจสอบว่ามีข้อมูลผู้ใช้หรือไม่ (ต้องผ่าน authenticateToken ก่อน)
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'โปรดเข้าสู่ระบบก่อน'
+      });
+    }
+    
+    // ตรวจสอบว่าผู้ใช้เป็น admin หรือไม่
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'คุณไม่มีสิทธิ์ในการเข้าถึงส่วนนี้'
+      });
+    }
+    
+    // ผู้ใช้เป็น admin สามารถดำเนินการต่อได้
+    next();
+  } catch (error) {
+    console.error('เกิดข้อผิดพลาดในการตรวจสอบสิทธิ์:', error);
+    res.status(500).json({
+      success: false,
+      message: 'เกิดข้อผิดพลาดในการตรวจสอบสิทธิ์'
     });
   }
-  next();
 }; 

@@ -1,7 +1,7 @@
 import express from 'express';
 import { body } from 'express-validator';
 import { validateRequest } from '../middleware/validateRequest.mjs';
-import { authenticateToken, isAdmin } from '../middleware/auth.mjs';
+import { authenticateToken, authorizeAdmin } from '../middleware/auth.mjs';
 import {
   createCategory,
   getAllCategories,

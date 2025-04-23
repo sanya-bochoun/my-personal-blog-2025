@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import defaultThumbnail from '../../assets/Img_box_light.png';
 import { IoChevronDownOutline } from "react-icons/io5";
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
-function AdminCreateArticle() {
+function EditArticle() {
   const navigate = useNavigate();
+  const { id } = useParams();
   const { user } = useAuth();
   const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
@@ -20,6 +21,43 @@ function AdminCreateArticle() {
     authorName: ''
   });
 
+  // ดึงข้อมูลบทความที่ต้องการแก้ไข
+  useEffect(() => {
+    const fetchArticle = async () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+          toast.error('กรุณาเข้าสู่ระบบ');
+          navigate('/admin/login');
+          return;
+        }
+
+        const response = await axios.get(`http://localhost:5000/api/admin/articles/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        const article = response.data.data;
+        setFormData({
+          title: article.title,
+          introduction: article.introduction || '',
+          content: article.content || '',
+          categoryId: article.category_id.toString(),
+          thumbnailPreview: article.thumbnail_image ? `http://localhost:5000${article.thumbnail_image}` : null,
+          authorName: user?.name || user?.username || ''
+        });
+      } catch (error) {
+        console.error('Error fetching article:', error);
+        toast.error('ไม่สามารถดึงข้อมูลบทความได้');
+        navigate('/admin/articles');
+      }
+    };
+
+    fetchArticle();
+  }, [id, user, navigate]);
+
+  // ดึงข้อมูลหมวดหมู่
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -35,29 +73,20 @@ function AdminCreateArticle() {
             Authorization: `Bearer ${token}`
           }
         });
-        setCategories(response.data.data);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-        if (error.response?.status === 401) {
-          toast.error('กรุณาเข้าสู่ระบบใหม่');
-          navigate('/admin/login');
+        
+        if (response.data.status === 'success') {
+          setCategories(response.data.data);
         } else {
           toast.error('ไม่สามารถดึงข้อมูลหมวดหมู่ได้');
         }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        toast.error('ไม่สามารถดึงข้อมูลหมวดหมู่ได้');
       }
     };
 
     fetchCategories();
   }, [navigate]);
-
-  useEffect(() => {
-    if (user) {
-      setFormData(prev => ({
-        ...prev,
-        authorName: user.name || user.username
-      }));
-    }
-  }, [user]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -84,7 +113,6 @@ function AdminCreateArticle() {
 
   const handleSaveAsDraft = async () => {
     try {
-      // Check if title and category are provided
       if (!formData.title.trim() || !formData.categoryId) {
         toast.error('กรุณากรอกชื่อบทความและเลือกหมวดหมู่');
         return;
@@ -107,7 +135,7 @@ function AdminCreateArticle() {
         form.append('thumbnail_image', formData.thumbnailImage);
       }
 
-      const response = await axios.post('http://localhost:5000/api/admin/articles', form, {
+      const response = await axios.put(`http://localhost:5000/api/admin/articles/${id}`, form, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -130,8 +158,7 @@ function AdminCreateArticle() {
 
   const handlePublish = async () => {
     try {
-      // Validate all required fields
-      if (!formData.title.trim() || !formData.categoryId || !formData.introduction?.trim() || !formData.content?.trim() || !formData.thumbnailImage) {
+      if (!formData.title.trim() || !formData.categoryId || !formData.introduction?.trim() || !formData.content?.trim()) {
         toast.error('กรุณากรอกข้อมูลให้ครบถ้วน');
         return;
       }
@@ -149,9 +176,11 @@ function AdminCreateArticle() {
       form.append('content', formData.content.trim());
       form.append('category_id', formData.categoryId);
       form.append('status', 'published');
-      form.append('thumbnail_image', formData.thumbnailImage);
+      if (formData.thumbnailImage) {
+        form.append('thumbnail_image', formData.thumbnailImage);
+      }
 
-      const response = await axios.post('http://localhost:5000/api/admin/articles', form, {
+      const response = await axios.put(`http://localhost:5000/api/admin/articles/${id}`, form, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -178,7 +207,7 @@ function AdminCreateArticle() {
       <div className="border-b border-gray-200 bg-[#F9F8F6]">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
-            <h1 className="text-xl font-medium text-[#26231E]">Create article</h1>
+            <h1 className="text-xl font-medium text-[#26231E]">Edit article</h1>
             <div className="flex gap-2">
               <button
                 onClick={handleSaveAsDraft}
@@ -333,4 +362,4 @@ function AdminCreateArticle() {
   );
 }
 
-export default AdminCreateArticle; 
+export default EditArticle; 

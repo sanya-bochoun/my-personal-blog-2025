@@ -30,6 +30,7 @@ import AdminResetPassword from './pages/admin/ResetPassword'
 import UserManagement from './pages/admin/UserManagement'
 import AdminResetUserPassword from './pages/admin/AdminResetUserPassword'
 import CreateArticle from './pages/CreateArticle'
+import AdminEditArticle from './pages/admin/EditArticle'
 
 // สร้าง Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -71,6 +72,7 @@ function App() {
           }>
             <Route path="article-management" element={<AdminArticleManagement />} />
             <Route path="create-article" element={<AdminCreateArticle />} />
+            <Route path="edit-article/:id" element={<AdminEditArticle />} />
             <Route path="category-management" element={<CategoryManagement />} />
             <Route path="create-category" element={<CreateCategory />} />
             <Route path="edit-category/:id" element={<EditCategory />} />

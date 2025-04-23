@@ -1,12 +1,23 @@
 import React from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { FiFileText, FiGrid, FiUser, FiBell, FiKey, FiUsers, FiHome, FiLogOut } from 'react-icons/fi';
+import { useAuth } from '../../context/AuthContext';
+import { toast } from 'react-hot-toast';
 
 function AdminLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const isActiveRoute = (path) => {
     return location.pathname === path;
+  };
+
+  const handleLogout = () => {
+    logout();
+    localStorage.removeItem('accessToken');
+    toast.success('ออกจากระบบสำเร็จ');
+    navigate('/');
   };
 
   const menuGroups = [
@@ -94,6 +105,7 @@ function AdminLayout() {
             hh. website
           </Link>
           <button
+            onClick={handleLogout}
             className="flex items-center mt-4 text-sm text-gray-600 hover:text-gray-900"
           >
             <FiLogOut className="w-5 h-5 mr-3" />
