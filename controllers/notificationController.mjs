@@ -1,24 +1,87 @@
 import db from '../utils/db.mjs';
 
 /**
- * ดึงรายการแจ้งเตือน
+ * ดึงรายการแจ้งเตือนและกิจกรรมล่าสุด
  */
 export const getNotifications = async (req, res) => {
   try {
     const userId = req.user.id;
     
-    const result = await db.query(
-      `SELECT * FROM notifications 
-       WHERE user_id = $1 
-       ORDER BY created_at DESC 
-       LIMIT 50`,
-      [userId]
-    );
+    // ดึงข้อมูลการแจ้งเตือนและกิจกรรมล่าสุด
+    const query = `
+      WITH recent_activities AS (
+        (SELECT 
+          'post' as type,
+          p.id,
+          p.title as content,
+          u.name as user_name,
+          u.avatar as user_avatar,
+          p.created_at,
+          NULL as target_id
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        ORDER BY p.created_at DESC
+        LIMIT 10)
+        
+        UNION ALL
+        
+        (SELECT 
+          'like' as type,
+          pl.id,
+          p.title as content,
+          u.name as user_name,
+          u.avatar as user_avatar,
+          pl.created_at,
+          p.id as target_id
+        FROM post_likes pl
+        JOIN users u ON pl.user_id = u.id
+        JOIN posts p ON pl.post_id = p.id
+        ORDER BY pl.created_at DESC
+        LIMIT 10)
+        
+        UNION ALL
+        
+        (SELECT 
+          'comment' as type,
+          c.id,
+          c.content,
+          u.name as user_name,
+          u.avatar as user_avatar,
+          c.created_at,
+          p.id as target_id
+        FROM comments c
+        JOIN users u ON c.user_id = u.id
+        JOIN posts p ON c.post_id = p.id
+        ORDER BY c.created_at DESC
+        LIMIT 10)
+        
+        UNION ALL
+        
+        (SELECT 
+          'comment_like' as type,
+          cl.id,
+          c.content,
+          u.name as user_name,
+          u.avatar as user_avatar,
+          cl.created_at,
+          c.id as target_id
+        FROM comment_likes cl
+        JOIN users u ON cl.user_id = u.id
+        JOIN comments c ON cl.comment_id = c.id
+        ORDER BY cl.created_at DESC
+        LIMIT 10)
+      )
+      SELECT * FROM recent_activities
+      ORDER BY created_at DESC
+      LIMIT 50;
+    `;
+
+    const result = await db.query(query);
 
     res.json({
       status: 'success',
       data: {
-        notifications: result.rows
+        activities: result.rows
       }
     });
   } catch (error) {
