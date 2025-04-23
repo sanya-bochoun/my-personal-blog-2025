@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiLoader } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -14,79 +14,85 @@ function CategoryManagement() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
 
-  // ดึงข้อมูล categories
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+  // Fetch categories
   const fetchCategories = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('accessToken');
+      // Add 1 second delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       console.log('Fetching categories with token:', token);
-      const response = await axios.get('http://localhost:5000/api/admin/categories', {
+      const response = await axios.get(`${API_URL}/api/admin/categories`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
       console.log('API Response:', response.data);
-      setCategories(response.data.data);
+      // เนื่องจาก backend ส่ง array ของ categories มาโดยตรง
+      setCategories(response.data);
     } catch (error) {
       console.error('Error fetching categories:', error.response || error);
-      toast.error('ไม่สามารถดึงข้อมูลหมวดหมู่ได้');
+      toast.error('Failed to fetch categories');
     } finally {
       setLoading(false);
     }
   };
 
-  // ค้นหา categories
+  // Search categories
   const handleSearch = async (e) => {
     setSearchTerm(e.target.value);
     try {
       const token = localStorage.getItem('accessToken');
       if (e.target.value.trim()) {
-        const response = await axios.get(`http://localhost:5000/api/admin/categories/search?q=${e.target.value}`, {
+        const response = await axios.get(`${API_URL}/api/admin/categories/search?q=${e.target.value}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
         setCategories(response.data.data);
       } else {
-        fetchCategories(); // ถ้าไม่มีคำค้นหา ดึงข้อมูลทั้งหมด
+        fetchCategories(); // If no search term, fetch all
       }
     } catch (error) {
       console.error('Error searching categories:', error);
-      toast.error('เกิดข้อผิดพลาดในการค้นหา');
+      toast.error('Error occurred while searching');
     }
   };
 
-  // แสดง modal ยืนยันการลบ
+  // Show delete confirmation modal
   const handleDeleteClick = (id) => {
     setSelectedCategoryId(id);
     setShowDeleteModal(true);
   };
 
-  // ลบ category
+  // Delete category
   const handleConfirmDelete = async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      await axios.delete(`http://localhost:5000/api/admin/categories/${selectedCategoryId}`, {
+      await axios.delete(`${API_URL}/api/admin/categories/${selectedCategoryId}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
-      toast.success('ลบหมวดหมู่เรียบร้อยแล้ว');
+      toast.success('Category deleted successfully');
       fetchCategories();
     } catch (error) {
       console.error('Error deleting category:', error);
-      toast.error(error.response?.data?.message || 'ไม่สามารถลบหมวดหมู่ได้');
+      toast.error(error.response?.data?.error || 'Failed to delete category');
     } finally {
       setShowDeleteModal(false);
       setSelectedCategoryId(null);
     }
   };
 
-  // แก้ไข category
+  // Edit category
   const handleEdit = (id) => {
     navigate(`/admin/edit-category/${id}`);
   };
 
-  // โหลดข้อมูลเมื่อ component ถูกโหลดและมีการ authenticate แล้ว
+  // Load data when component is mounted and authenticated
   useEffect(() => {
     if (isAuthenticated) {
       fetchCategories();
@@ -132,9 +138,12 @@ function CategoryManagement() {
         </div>
         <div className="divide-y divide-gray-200">
           {loading ? (
-            <div className="px-6 py-4 text-center text-gray-500">กำลังโหลด...</div>
+            <div className="flex items-center justify-center p-8">
+              <FiLoader className="w-6 h-6 text-gray-400 animate-spin mr-2" />
+              <span className="text-gray-500">Loading...</span>
+            </div>
           ) : categories.length === 0 ? (
-            <div className="px-6 py-4 text-center text-gray-500">ไม่พบหมวดหมู่</div>
+            <div className="px-6 py-4 text-center text-gray-500">No categories found</div>
           ) : (
             categories.map((category) => (
               <div key={category.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-100">

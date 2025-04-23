@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiLoader } from 'react-icons/fi';
 
 function ArticleManagement() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -12,11 +12,15 @@ function ArticleManagement() {
   const [categories, setCategories] = useState([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [articleToDelete, setArticleToDelete] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // ดึงข้อมูลบทความทั้งหมด
   const fetchArticles = async () => {
     try {
+      setIsLoading(true);
       const token = localStorage.getItem('accessToken');
+      // Add 1 second delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       const response = await axios.get('http://localhost:5000/api/admin/articles', {
         headers: {
           Authorization: `Bearer ${token}`
@@ -25,7 +29,9 @@ function ArticleManagement() {
       setArticles(response.data.data);
     } catch (error) {
       console.error('Error fetching articles:', error);
-      toast.error('ไม่สามารถดึงข้อมูลบทความได้');
+      toast.error('Failed to fetch articles');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -41,11 +47,11 @@ function ArticleManagement() {
       if (response.data.status === 'success') {
         setCategories(response.data.data);
       } else {
-        toast.error('ไม่สามารถดึงข้อมูลหมวดหมู่ได้');
+        toast.error('Failed to fetch categories');
       }
     } catch (error) {
       console.error('Error fetching categories:', error);
-      toast.error('ไม่สามารถดึงข้อมูลหมวดหมู่ได้');
+      toast.error('Failed to fetch categories');
     }
   };
 
@@ -75,13 +81,13 @@ function ArticleManagement() {
           Authorization: `Bearer ${token}`
         }
       });
-      toast.success('ลบบทความเรียบร้อยแล้ว');
-      fetchArticles(); // ดึงข้อมูลใหม่หลังลบ
+      toast.success('Article deleted successfully');
+      fetchArticles();
       setShowDeleteModal(false);
       setArticleToDelete(null);
     } catch (error) {
       console.error('Error deleting article:', error);
-      toast.error('ไม่สามารถลบบทความได้');
+      toast.error('Failed to delete article');
     }
   };
 
@@ -160,63 +166,78 @@ function ArticleManagement() {
 
         {/* Articles Table */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ARTICLE TITLE
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  CATEGORY
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  STATUS
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ACTIONS
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200 text-left">
-              {filteredArticles.map(article => (
-                <tr key={article.id}>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">{article.title}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">
-                      {article.category_name || categories.find(c => c.id === article.category_id)?.name || 'ไม่ระบุหมวดหมู่'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      article.status === 'published' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {article.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm font-medium">
-                    <div className="flex items-center space-x-4">
-                      <Link
-                        to={`/admin/edit-article/${article.id}`}
-                        className="text-gray-600 hover:text-gray-900"
-                      >
-                        <FiEdit2 className="w-5 h-5" />
-                      </Link>
-                      <button
-                        onClick={() => handleDeleteClick(article)}
-                        className="text-gray-600 hover:text-gray-900 cursor-pointer"
-                      >
-                        <FiTrash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </td>
+          {isLoading ? (
+            <div className="flex items-center justify-center p-8">
+              <FiLoader className="w-6 h-6 text-gray-400 animate-spin mr-2" />
+              <span className="text-gray-500">Loading...</span>
+            </div>
+          ) : (
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    ARTICLE TITLE
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    CATEGORY
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    STATUS
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    ACTIONS
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200 text-left">
+                {filteredArticles.length === 0 ? (
+                  <tr>
+                    <td colSpan="4" className="px-6 py-4 text-center text-gray-500">
+                      No articles found
+                    </td>
+                  </tr>
+                ) : (
+                  filteredArticles.map(article => (
+                    <tr key={article.id}>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">{article.title}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">
+                          {article.category_name || categories.find(c => c.id === article.category_id)?.name || 'Uncategorized'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          article.status === 'published' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {article.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium">
+                        <div className="flex items-center space-x-4">
+                          <Link
+                            to={`/admin/edit-article/${article.id}`}
+                            className="text-gray-600 hover:text-gray-900"
+                          >
+                            <FiEdit2 className="w-5 h-5" />
+                          </Link>
+                          <button
+                            onClick={() => handleDeleteClick(article)}
+                            className="text-gray-600 hover:text-gray-900 cursor-pointer"
+                          >
+                            <FiTrash2 className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 

@@ -8,7 +8,7 @@ const AdminRoute = ({ children }) => {
     return <div>กำลังโหลด...</div>;
   }
 
-  if (!isAuthenticated || user?.role !== 'admin') {
+  if (!isAuthenticated || (user?.role !== 'admin' && user?.role !== 'editor')) {
     return <Navigate to="/" replace />;
   }
 

@@ -127,7 +127,7 @@ function Navbar() {
                         </svg>
                         <span className="truncate">Article Management</span>
                       </Link>
-                      {user?.role === 'admin' && (
+                      {(user?.role === 'admin' || user?.role === 'editor') && (
                         <Link
                           to="/admin/article-management"
                           className="w-full flex items-center px-4 py-3 text-left text-gray-700 hover:bg-gray-100"
