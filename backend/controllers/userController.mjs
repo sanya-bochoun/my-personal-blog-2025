@@ -293,6 +293,83 @@ export const getProfile = async (req, res) => {
   }
 };
 
+/**
+ * เปลี่ยนรหัสผ่านผู้ใช้
+ */
+export const resetPassword = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    // ตรวจสอบว่ามีข้อมูลครบถ้วน
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'กรุณากรอกข้อมูลให้ครบถ้วน'
+      });
+    }
+
+    // ตรวจสอบว่ารหัสผ่านใหม่และยืนยันรหัสผ่านตรงกัน
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'รหัสผ่านใหม่และยืนยันรหัสผ่านไม่ตรงกัน'
+      });
+    }
+
+    // ตรวจสอบความยาวรหัสผ่านใหม่
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร'
+      });
+    }
+
+    // ดึงข้อมูลผู้ใช้
+    const userResult = await db.query('SELECT password FROM users WHERE id = $1', [userId]);
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'ไม่พบข้อมูลผู้ใช้'
+      });
+    }
+
+    // ตรวจสอบรหัสผ่านปัจจุบัน
+    const isValidPassword = await bcrypt.compare(
+      currentPassword,
+      userResult.rows[0].password
+    );
+
+    if (!isValidPassword) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'รหัสผ่านปัจจุบันไม่ถูกต้อง'
+      });
+    }
+
+    // เข้ารหัสรหัสผ่านใหม่
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // อัพเดทรหัสผ่าน
+    await db.query(
+      'UPDATE users SET password = $1 WHERE id = $2',
+      [hashedPassword, userId]
+    );
+
+    res.json({
+      status: 'success',
+      message: 'เปลี่ยนรหัสผ่านสำเร็จ'
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน'
+    });
+  }
+};
+
 export {
   updateProfile,
   uploadAvatar,

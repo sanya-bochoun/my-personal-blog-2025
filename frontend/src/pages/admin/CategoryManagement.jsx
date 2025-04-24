@@ -30,8 +30,12 @@ function CategoryManagement() {
         }
       });
       console.log('API Response:', response.data);
-      // เนื่องจาก backend ส่ง array ของ categories มาโดยตรง
-      setCategories(response.data);
+      // เนื่องจาก backend ส่งข้อมูลมาในรูปแบบ { status: 'success', data: [...] }
+      if (response.data.status === 'success') {
+        setCategories(response.data.data);
+      } else {
+        toast.error('Failed to fetch categories');
+      }
     } catch (error) {
       console.error('Error fetching categories:', error.response || error);
       toast.error('Failed to fetch categories');
@@ -107,7 +111,7 @@ function CategoryManagement() {
         <h1 className="text-2xl font-medium text-gray-900">Category management</h1>
         <button 
           onClick={() => navigate('/admin/create-category')}
-          className="px-[40px] py-[12px] text-sm font-medium text-white bg-gray-900 rounded-full hover:bg-gray-800 flex items-center gap-2 cursor-pointer"
+          className="px-[40px] py-[12px] text-sm font-medium text-white bg-gray-900 rounded-[999px] hover:bg-gray-800 flex items-center gap-2 cursor-pointer"
         >
           <span>+</span> Create category
         </button>
@@ -170,8 +174,8 @@ function CategoryManagement() {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-[#F5F5F5] bg-opacity-20 backdrop-blur-[2px] flex items-center justify-center z-50">
-          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-6 w-[400px] shadow-lg">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white/90 backdrop-blur-md rounded-lg p-6 w-[400px] shadow-lg">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-xl font-medium">Delete category</h2>
               <button

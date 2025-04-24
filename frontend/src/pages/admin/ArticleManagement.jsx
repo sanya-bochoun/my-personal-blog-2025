@@ -105,7 +105,7 @@ function ArticleManagement() {
         <h1 className="text-2xl font-semibold text-gray-900">Article management</h1>
         <Link
           to="/admin/create-article"
-          className="inline-flex items-center px-4 py-2 bg-[#26231E] text-white rounded-full hover:bg-gray-800"
+          className="inline-flex items-center px-[40px] py-[12px] bg-[#26231E] text-white rounded-[999px] hover:bg-gray-800"
         >
           <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
