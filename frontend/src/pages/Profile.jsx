@@ -27,11 +27,10 @@ function Profile() {
       setFormData({
         full_name: user.full_name || '',
         username: user.username || '',
-        email: user.email || ''
+        email: user.email || '',
+        bio: user.bio || ''
       });
-      // ดึง bio จาก localStorage ถ้ามี
-      const savedBio = localStorage.getItem('tempBio');
-      setBioText(savedBio || '');
+      setBioText(user.bio || '');
     }
   }, [user]);
 
@@ -39,8 +38,10 @@ function Profile() {
     const { name, value } = e.target;
     if (name === 'bio') {
       setBioText(value);
-      // เก็บ bio ชั่วคราวใน localStorage
-      localStorage.setItem('tempBio', value);
+      setFormData(prev => ({
+        ...prev,
+        bio: value
+      }));
     } else {
       setFormData(prev => ({
         ...prev,
@@ -218,11 +219,11 @@ function Profile() {
   }
 
   return (
-    <div className="bg-[#F9F9F9] min-h-screen pt-8 md:pt-28 pt-20" key={refreshKey}>
+    <div className="bg-[#f9f8f6] min-h-screen pt-8 md:pt-28 pt-20" key={refreshKey}>
       <div className="max-w-5xl mx-auto px-4">
         {/* Mobile View */}
         <div className="block md:hidden">
-          <div className="bg-[#F9F9F9]  mb-4">
+          <div className="bg-[#f9f8f6]  mb-4">
             <div className="flex items-center space-x-6 p-4">
               <Link to="/profile" className="flex items-center space-x-2 text-gray-900">
                 <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -247,7 +248,7 @@ function Profile() {
               <img 
                 src={user?.avatar_url || defaultImage}
                 alt="Profile"
-                className="w-full h-full object-cover"
+                className="bg-w-full h-full object-cover"
                 onError={(e) => {
                   e.target.onerror = null;
                   e.target.src = defaultImage;
@@ -261,9 +262,9 @@ function Profile() {
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg mt-4">
+          <div className="bg-[#EFEEEB] p-6 rounded-lg mt-4 sm:bg-[#EFEEEB]">
             <div className="flex flex-col items-center mb-8">
-              <div className="w-32 h-32 rounded-full overflow-hidden mb-4">
+              <div className="w-32 h-32 rounded-full overflow-hidden mb-4 bg-amber-800">
                 <img 
                   src={user?.avatar_url || defaultImage}
                   alt="Profile"
@@ -274,38 +275,38 @@ function Profile() {
                   }}
                 />
               </div>
-              <button className="w-full py-3 px-4 border border-gray-300 rounded-full text-gray-700">
+              <button className="bg-white w-full py-3 px-4 border sm:bg-white border-gray-300 rounded-full text-gray-700">
                 Upload profile picture
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-gray-600 mb-1">Name</label>
+                <label className="block text-gray-600 mb-1 text-left sm:text-left">Name</label>
                 <input
                   type="text"
                   name="full_name"
                   value={formData.full_name}
                   onChange={handleChange}
-                  className="w-full p-3 border border-gray-200 rounded-lg"
+                  className="bg-white w-full p-3 border border-gray-200 rounded-lg sm:bg-white"
                   placeholder="กรุณากรอกชื่อของคุณ"
                 />
               </div>
               
               <div>
-                <label className="block text-gray-600 mb-1">Username</label>
+                <label className="block text-gray-600 mb-1 text-left">Username</label>
                 <input
                   type="text"
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
-                  className="w-full p-3 border border-gray-200 rounded-lg"
+                  className="bg-white w-full p-3 border border-gray-200 rounded-lg"
                   placeholder="กรุณากรอกชื่อผู้ใช้ของคุณ"
                 />
               </div>
               
               <div>
-                <label className="block text-gray-600 mb-1">Email</label>
+                <label className="block text-gray-600 mb-1 text-left">Email</label>
                 <input
                   type="email"
                   name="email"
@@ -319,12 +320,12 @@ function Profile() {
 
               {/* Bio field for mobile */}
               <div>
-                <label className="block text-gray-600 mb-1">Bio</label>
+                <label className="block text-gray-600 mb-1 text-left">Bio</label>
                 <textarea
                   name="bio"
                   value={bioText}
                   onChange={handleChange}
-                  className="w-full p-3 border border-gray-200 rounded-lg resize-none"
+                  className="bg-white w-full p-3 border border-gray-200 rounded-lg resize-none"
                   rows="4"
                   maxLength="300"
                   placeholder="เขียนเกี่ยวกับตัวคุณสั้นๆ..."
@@ -412,7 +413,7 @@ function Profile() {
 
           {/* Main Content */}
           <div className="flex-1 pl-10">
-            <div className="bg-white rounded-lg shadow-sm p-8 max-w-2xl ml-auto mr-10">
+            <div className="bg-[#EFEEEB] rounded-lg shadow-sm p-8 max-w-2xl ml-auto mr-10 mb-15">
               <div className="flex items-center justify-start gap-6 mb-6">
                 <div className="w-24 h-24 overflow-hidden rounded-full bg-[#777777]">
                   <img 
@@ -443,31 +444,31 @@ function Profile() {
               
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-gray-600 mb-1">Name</label>
+                  <label className="block text-gray-600 mb-1 text-left">Name</label>
                   <input
                     type="text"
                     name="full_name"
                     value={formData.full_name}
                     onChange={handleChange}
-                    className="w-full p-3 border border-gray-200 rounded-lg"
+                    className="bg-white w-full p-3 border border-gray-200 rounded-lg"
                     placeholder="กรุณากรอกชื่อของคุณ"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-gray-600 mb-1">Username</label>
+                  <label className="block text-gray-600 mb-1 text-left">Username</label>
                   <input
                     type="text"
                     name="username"
                     value={formData.username}
                     onChange={handleChange}
-                    className="w-full p-3 border border-gray-200 rounded-lg"
+                    className="bg-white w-full p-3 border border-gray-200 rounded-lg"
                     placeholder="กรุณากรอกชื่อผู้ใช้ของคุณ"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-gray-600 mb-1">Email</label>
+                  <label className="block text-gray-600 mb-1 text-left">Email</label>
                   <input
                     type="email"
                     name="email"
@@ -481,12 +482,12 @@ function Profile() {
 
                 {/* Bio field for desktop */}
                 <div>
-                  <label className="block text-gray-600 mb-1">Bio</label>
+                  <label className="block text-gray-600 mb-1 text-left">Bio</label>
                   <textarea
                     name="bio"
                     value={bioText}
                     onChange={handleChange}
-                    className="w-full p-3 border border-gray-200 rounded-lg resize-none"
+                    className="bg-white w-full p-3 border border-gray-200 rounded-lg resize-none"
                     rows="4"
                     maxLength="300"
                     placeholder="เขียนเกี่ยวกับตัวคุณสั้นๆ..."
@@ -496,10 +497,10 @@ function Profile() {
                   </p>
                 </div>
 
-                <div className="mt-6">
+                <div className="mt-6 text-left">
                   <button
                     type="submit"
-                    className="w-full h-[48px] bg-[#26231E] text-white rounded-[999px] hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-[40px] py-[12px] bg-[#26231E] text-white rounded-[999px] hover:bg-gray-800 disabled:opacity-50 cursor-pointer"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? (

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 function ResetPassword() {
+  const navigate = useNavigate();
   const { user, isLoading } = useAuth();
   const [formData, setFormData] = useState({
     current_password: '',
@@ -13,6 +14,7 @@ function ResetPassword() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [profileImage, setProfileImage] = useState('');
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   
   // ใช้รูปโลโก้ default เป็นค่าเริ่มต้น
   const defaultImage = '/src/assets/default-logo.png';
@@ -69,38 +71,47 @@ function ResetPassword() {
     if (!validateForm()) {
       return;
     }
-    
+
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmReset = async () => {
     setIsSubmitting(true);
     
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/users/change-password`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/reset-password`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          current_password: formData.current_password,
-          new_password: formData.new_password
+          currentPassword: formData.current_password,
+          newPassword: formData.new_password,
+          confirmPassword: formData.confirm_password
         })
       });
 
       const data = await response.json();
 
-      if (!response.ok) {
+      if (response.ok) {
+        toast.success('รหัสผ่านถูกเปลี่ยนเรียบร้อยแล้ว');
+        setShowConfirmModal(false);
+        navigate('/');
+      } else {
         throw new Error(data.message || 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน');
       }
-
-      toast.success('เปลี่ยนรหัสผ่านสำเร็จ');
-      setFormData({
-        current_password: '',
-        new_password: '',
-        confirm_password: ''
-      });
     } catch (err) {
-      console.error('Error changing password:', err);
-      toast.error(err.message || 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน');
+      console.error('Error resetting password:', err);
+      toast.error(err.message || 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน กรุณาลองใหม่อีกครั้ง');
+      
+      if (err.message.includes('current password is incorrect')) {
+        setErrors(prev => ({
+          ...prev,
+          current_password: 'รหัสผ่านปัจจุบันไม่ถูกต้อง'
+        }));
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -111,7 +122,7 @@ function ResetPassword() {
   }
 
   return (
-    <div className="bg-[#F9F9F9] min-h-screen pt-8 md:pt-28">
+    <div className="bg-[#F9F9F9] min-h-screen pt-8 md:pt-28 ">
       <div className="max-w-5xl mx-auto px-4">
         {/* Mobile View */}
         <div className="block md:hidden">
@@ -154,7 +165,7 @@ function ResetPassword() {
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg mt-4">
+          <div className="bg-[#EFEEEB] p-6 rounded-lg mt-4">
             <div className="flex flex-col items-center mb-8">
               <div className="w-32 h-32 rounded-full overflow-hidden mb-4">
                 <img 
@@ -171,13 +182,13 @@ function ResetPassword() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-gray-600 mb-1">Current Password</label>
+                <label className="block text-gray-600 mb-1 text-left">Current Password</label>
                 <input
                   type="password"
                   name="current_password"
                   value={formData.current_password}
                   onChange={handleChange}
-                  className={`w-full p-3 border ${errors.current_password ? 'border-red-500' : 'border-gray-200'} rounded-lg`}
+                  className={`bg-white w-full p-3 border ${errors.current_password ? 'border-red-500' : 'border-gray-200'} rounded-lg`}
                   placeholder="Enter your current password"
                 />
                 {errors.current_password && (
@@ -186,13 +197,13 @@ function ResetPassword() {
               </div>
               
               <div>
-                <label className="block text-gray-600 mb-1">New Password</label>
+                <label className="block text-gray-600 mb-1 text-left">New Password</label>
                 <input
                   type="password"
                   name="new_password"
                   value={formData.new_password}
                   onChange={handleChange}
-                  className={`w-full p-3 border ${errors.new_password ? 'border-red-500' : 'border-gray-200'} rounded-lg`}
+                  className={`bg-white w-full p-3 border ${errors.new_password ? 'border-red-500' : 'border-gray-200'} rounded-lg`}
                   placeholder="Enter your new password"
                 />
                 {errors.new_password && (
@@ -202,13 +213,13 @@ function ResetPassword() {
               </div>
               
               <div>
-                <label className="block text-gray-600 mb-1">Confirm New Password</label>
+                <label className="block text-gray-600 mb-1 text-left">Confirm New Password</label>
                 <input
                   type="password"
                   name="confirm_password"
                   value={formData.confirm_password}
                   onChange={handleChange}
-                  className={`w-full p-3 border ${errors.confirm_password ? 'border-red-500' : 'border-gray-200'} rounded-lg`}
+                  className={`bg-white w-full p-3 border ${errors.confirm_password ? 'border-red-500' : 'border-gray-200'} rounded-lg`}
                   placeholder="Confirm your new password"
                 />
                 {errors.confirm_password && (
@@ -336,11 +347,11 @@ function ResetPassword() {
                   <div className="flex justify-start mt-6">
                     <button
                       type="submit"
-                      className="w-[120px] h-[48px] bg-[#26231E] text-white rounded-[999px] hover:bg-gray-800 disabled:opacity-50"
+                      className="px[40px] py-[12px] bg-[#26231E] text-white rounded-[999px] hover:bg-gray-800 disabled:opacity-50"
                       style={{ padding: '12px 40px' }}
                       disabled={isSubmitting}
                     >
-                      {isSubmitting ? 'Processing...' : 'Save'}
+                      {isSubmitting ? 'Processing...' : 'Reset password'}
                     </button>
                   </div>
                 </form>
@@ -349,6 +360,31 @@ function ResetPassword() {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white/90 backdrop-blur-md rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h2 className="text-xl font-medium text-center mb-4">Reset password</h2>
+            <p className="text-center text-gray-600 mb-6">Do you want to reset your password?</p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="px-6 py-2 border border-gray-300 rounded-full text-gray-700 hover:bg-gray-50/80 transition-colors duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmReset}
+                disabled={isSubmitting}
+                className="px-6 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 disabled:opacity-50 transition-colors duration-200"
+              >
+                {isSubmitting ? 'Processing...' : 'Reset'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
