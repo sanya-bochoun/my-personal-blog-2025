@@ -11,4 +11,20 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  define: {
+    'process.env': {
+      VITE_API_URL: JSON.stringify(process.env.VITE_API_URL || 'http://localhost:5000'),
+      NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development')
+    }
+  },
+  server: {
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false
+      }
+    }
+  }
 })

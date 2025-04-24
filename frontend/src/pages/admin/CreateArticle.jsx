@@ -7,10 +7,13 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { FiLoader } from 'react-icons/fi';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 function AdminCreateArticle() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [isCategoriesLoading, setIsCategoriesLoading] = useState(true);
   const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
     title: '',
@@ -25,6 +28,7 @@ function AdminCreateArticle() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
+        setIsCategoriesLoading(true);
         const token = localStorage.getItem('accessToken');
         if (!token) {
           toast.error('กรุณาเข้าสู่ระบบ');
@@ -32,12 +36,18 @@ function AdminCreateArticle() {
           return;
         }
 
-        const response = await axios.get('http://localhost:5000/api/admin/categories', {
+        const response = await axios.get(`${API_URL}/api/categories`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
-        setCategories(response.data.data);
+        
+        if (response.data?.data) {
+          setCategories(response.data.data);
+        } else {
+          setCategories([]);
+          toast.error('ไม่พบข้อมูลหมวดหมู่');
+        }
       } catch (error) {
         console.error('Error fetching categories:', error);
         if (error.response?.status === 401) {
@@ -45,7 +55,10 @@ function AdminCreateArticle() {
           navigate('/admin/login');
         } else {
           toast.error('ไม่สามารถดึงข้อมูลหมวดหมู่ได้');
+          setCategories([]);
         }
+      } finally {
+        setIsCategoriesLoading(false);
       }
     };
 
@@ -261,17 +274,24 @@ function AdminCreateArticle() {
                 name="categoryId"
                 value={formData.categoryId}
                 onChange={handleInputChange}
+                disabled={isCategoriesLoading}
                 className="text-[#75716B] w-[480px] h-[48px] px-4 py-2.5 ml-[-470px] text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200 appearance-none bg-white"
               >
-                <option value="">Select category</option>
-                {categories.map((category) => (
+                <option value="">
+                  {isCategoriesLoading ? 'Loading categories...' : 'Select category'}
+                </option>
+                {categories && categories.length > 0 && categories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
                   </option>
                 ))}
               </select>
               <div className="absolute right-4 sm:right-[500px] top-1/2 transform -translate-y-1/2 pointer-events-none">
-                <IoChevronDownOutline className="text-[#75716B] w-6 h-6" />
+                {isCategoriesLoading ? (
+                  <FiLoader className="animate-spin w-6 h-6 text-[#75716B]" />
+                ) : (
+                  <IoChevronDownOutline className="text-[#75716B] w-6 h-6" />
+                )}
               </div>
             </div>
           </div>
