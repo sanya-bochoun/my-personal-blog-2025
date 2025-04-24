@@ -31,6 +31,7 @@ import UserManagement from './pages/admin/UserManagement'
 import AdminResetUserPassword from './pages/admin/AdminResetUserPassword'
 import CreateArticle from './pages/CreateArticle'
 import AdminEditArticle from './pages/admin/EditArticle'
+import EditArticle from './pages/EditArticle'
 
 // สร้าง Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -115,6 +116,7 @@ function App() {
           <Route path="/admin/category-management" element={<ProtectedRoute><CategoryManagement /></ProtectedRoute>} />
           <Route path="/admin/create-category" element={<ProtectedRoute><CreateCategory /></ProtectedRoute>} />
           <Route path="/admin/edit-category/:id" element={<ProtectedRoute><EditCategory /></ProtectedRoute>} />
+          <Route path="/edit-article/:id" element={<ProtectedRoute><EditArticle /></ProtectedRoute>} />
           <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />
         </Routes>
         <Toaster position="top-right" />

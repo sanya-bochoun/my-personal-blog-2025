@@ -58,22 +58,22 @@ function CreateArticle() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9F8F6] mt-30">
+    <div className="min-h-screen bg-[#F9F8F6] mt-10 sm:mt-30">
       {/* Header */}
       <div className="border-b border-gray-200 bg-[#F9F8F6]">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center flex-col sm:flex-row gap-4 sm:gap-0">
-            <h1 className="text-xl font-medium text-[#26231E]">Create article</h1>
-            <div className="flex gap-2 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <h1 className="text-2xl font-medium text-[#26231E] text-center sm:text-left order-1">Create article</h1>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto order-2">
               <button
                 onClick={handleSaveAsDraft}
-                className="w-full sm:w-auto px-[40px] py-[12px] text-sm font-medium text-[#26231E] bg-white border border-gray-300 rounded-full hover:bg-gray-50"
+                className="w-full sm:w-auto px-[40px] py-[12px] text-sm font-medium text-[#26231E] bg-white border border-gray-300 rounded-[999px] hover:bg-gray-50 sm:cursor-pointer sm:px-[40px]py-[12px]"
               >
                 Save as draft
               </button>
               <button
                 onClick={handlePublish}
-                className="w-full sm:w-auto px-[40px] py-[12px] text-sm font-medium text-white bg-[#26231E] rounded-full hover:bg-gray-800"
+                className="w-full sm:w-auto px-[40px] py-[12px] text-sm font-medium text-white bg-[#26231E] rounded-[999px] hover:bg-gray-800 sm:cursor-pointer"
               >
                 Save and publish
               </button>
@@ -83,11 +83,11 @@ function CreateArticle() {
       </div>
 
       {/* Content */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="space-y-6 sm:space-y-8">
           {/* Thumbnail Image */}
           <div>
-            <label className="block text-base font-medium text-[#75716B] mb-3 text-left">
+            <label className="block text-base font-medium text-[#75716B] mb-3 sm:text-left">
               Thumbnail image
             </label>
             <div className="flex flex-col sm:flex-row gap-4">
@@ -102,7 +102,7 @@ function CreateArticle() {
                   />
                 </div>
               </div>
-              <div className="flex items-end sm:h-[260px] ml-0 sm:ml-4">
+              <div className="flex items-center sm:items-end sm:h-[260px] ml-0 sm:ml-4">
                 <input
                   type="file"
                   accept="image/*"

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
+import { FiEdit2, FiTrash2, FiLoader, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 function ArticleManagement() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -9,225 +11,368 @@ function ArticleManagement() {
   const [articles, setArticles] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedArticleId, setSelectedArticleId] = useState(null);
+  
+  // เพิ่ม state สำหรับ pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
-  useEffect(() => {
-    // ดึงข้อมูล token จาก localStorage
-    const token = localStorage.getItem('token');
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     
-    // ฟังก์ชันสำหรับดึงข้อมูลบทความ
+  // Fetch articles
     const fetchArticles = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/articles`, {
+      setLoading(true);
+      const token = localStorage.getItem('accessToken');
+      // Add 1 second delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await axios.get(`${API_URL}/api/articles`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      if (response.data.status === 'success') {
+        setArticles(response.data.data);
+      } else {
+        toast.error('Failed to fetch articles');
+      }
+    } catch (error) {
+      console.error('Error fetching articles:', error);
+      toast.error('Error fetching articles. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Search articles
+  const handleSearch = async (e) => {
+    setSearchQuery(e.target.value);
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (e.target.value.trim()) {
+        const response = await axios.get(`${API_URL}/api/articles/search?q=${e.target.value}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
-        
-        console.log('Articles data from API:', response.data);
-        
-        if (response.data.success && response.data.data) {
-          // ใช้ข้อมูลโดยตรงจาก API โดยไม่แก้ไขโครงสร้าง
+        if (response.data.status === 'success') {
           setArticles(response.data.data);
-        } else {
-          setError('Failed to fetch articles');
         }
-      } catch (err) {
-        console.error('Error fetching articles:', err);
-        setError('Error fetching articles. Please try again.');
-      } finally {
-        setLoading(false);
+      } else {
+        fetchArticles();
       }
-    };
-    
-    // ฟังก์ชันสำหรับดึงข้อมูลหมวดหมู่
+    } catch (error) {
+      console.error('Error searching articles:', error);
+      toast.error('Error occurred while searching');
+    }
+  };
+
+  // Fetch categories
     const fetchCategories = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/categories`);
-        console.log('Categories data from API:', response.data);
-        
-        // รองรับหลายรูปแบบของ API response
-        if (response.data.data) {
+      const response = await axios.get(`${API_URL}/api/categories`);
+      if (response.data.status === 'success') {
           setCategories(response.data.data);
-        } else if (Array.isArray(response.data)) {
-          setCategories(response.data);
-        } else {
-          setCategories([]);
-        }
-      } catch (err) {
-        console.error('Error fetching categories:', err);
-        setCategories([]);
       }
-    };
-    
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      toast.error('Failed to fetch categories');
+    }
+  };
+
+  useEffect(() => {
     fetchArticles();
     fetchCategories();
   }, []);
 
-  // ฟังก์ชันสำหรับลบบทความ
-  const handleDelete = async (id) => {
-    if (window.confirm('คุณต้องการลบบทความนี้ใช่หรือไม่?')) {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/articles/${id}`, {
+  // Filter articles
+  const filteredArticles = articles.filter(article => {
+    const matchesSearch = article.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = !selectedStatus || article.status === selectedStatus;
+    const matchesCategory = !selectedCategory || article.category_id === parseInt(selectedCategory);
+    return matchesSearch && matchesStatus && matchesCategory;
+  });
+
+  // คำนวณข้อมูลสำหรับ pagination
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredArticles.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredArticles.length / itemsPerPage);
+
+  // ฟังก์ชันสำหรับเปลี่ยนหน้า
+  const paginate = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo(0, 0);
+  };
+
+  const handleDeleteClick = (article) => {
+    setSelectedArticleId(article.id);
+    setShowDeleteModal(true);
+  };
+
+  const handleCancelDelete = () => {
+    setSelectedArticleId(null);
+    setShowDeleteModal(false);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await axios.delete(`${API_URL}/api/articles/${selectedArticleId}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
         
-        if (response.data.success) {
-          setArticles(articles.filter(article => article.id !== id));
-          alert('ลบบทความสำเร็จ');
-        }
-      } catch (err) {
-        console.error('Error deleting article:', err);
-        alert('เกิดข้อผิดพลาดในการลบบทความ');
+      if (response.data.status === 'success') {
+        toast.success('Article deleted successfully');
+        fetchArticles();
+      } else {
+        toast.error('Failed to delete article');
       }
+    } catch (error) {
+      console.error('Error deleting article:', error);
+      toast.error('Error deleting article. Please try again.');
+    } finally {
+      setSelectedArticleId(null);
+      setShowDeleteModal(false);
     }
   };
 
-  // กรองบทความตามเงื่อนไขการค้นหา
-  const filteredArticles = articles.filter(article => {
-    const matchesSearchQuery = article.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = !selectedStatus || article.status === selectedStatus;
-    
-    // กรองตามหมวดหมู่โดยใช้ category_name
-    const matchesCategory = !selectedCategory || article.category_name === selectedCategory;
-    
-    return matchesSearchQuery && matchesStatus && matchesCategory;
-  });
-
-  if (loading) return <div className="min-h-screen flex items-center justify-center">กำลังโหลดข้อมูล...</div>;
-  if (error) return <div className="min-h-screen flex items-center justify-center text-red-500">{error}</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <FiLoader className="w-8 h-8 text-gray-400 animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#F9F9F9] pt-16 sm:pt-20 sm:mt-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Article management</h1>
-          <Link
-            to="/create-article"
-            className="w-full sm:w-auto bg-[#26231E] text-white px-4 py-2 rounded-full hover:bg-gray-800 transition-colors text-center"
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-12 mb-81 text-left min-h-screen sm:mt-20">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <h1 className="text-2xl sm:text-2xl font-semibold text-gray-900 order-1 sm:order-none text-center sm:text-left">My Articles</h1>
+        <Link
+          to="/create-article"
+          className="w-full sm:w-auto px-4 sm:px-[40px] py-[12px] sm:py-[12px] text-sm font-medium text-white bg-gray-900 rounded-[999px] hover:bg-gray-800 flex items-center gap-2 justify-center sm:justify-start order-2 sm:order-none"
+        >
+          <span>+</span> Create article
+        </Link>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search articles..."
+            value={searchQuery}
+            onChange={handleSearch}
+            className="bg-white w-full px-4 py-2.5 pl-10 border border-gray-300 rounded-lg text-sm"
+          />
+          <svg
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
-            + Create article
-          </Link>
-        </div>
-
-        {/* Filters */}
-        <div className="space-y-4 mb-6">
-          {/* Search */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg pl-10"
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
             />
-            <svg
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-          </div>
-
-          {/* Filter Dropdowns */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="w-full sm:flex-1 px-4 py-2 border border-gray-200 rounded-lg bg-white"
-            >
-              <option value="">Status</option>
-              <option value="published">Published</option>
-              <option value="draft">Draft</option>
-            </select>
-
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full sm:flex-1 px-4 py-2 border border-gray-200 rounded-lg bg-white"
-            >
-              <option value="">Category</option>
-              {categories.map(category => (
-                <option key={category.id || category.name} value={category.name}>{category.name}</option>
-              ))}
-            </select>
-          </div>
+          </svg>
         </div>
 
-        {/* Articles List */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          {/* Header - Hidden on Mobile */}
-          <div className="hidden sm:block px-4 py-3 border-b border-gray-200">
-            <div className="grid grid-cols-12 gap-4">
-              <div className="col-span-6 text-sm font-medium text-gray-500">ARTICLE TITLE</div>
-              <div className="col-span-3 text-sm font-medium text-gray-500">CATEGORY</div>
-              <div className="col-span-3 text-sm font-medium text-gray-500">STATUS</div>
-            </div>
-          </div>
+        <select
+          value={selectedStatus}
+          onChange={(e) => setSelectedStatus(e.target.value)}
+          className="bg-white w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm"
+        >
+          <option value="">All Status</option>
+          <option value="published">Published</option>
+          <option value="draft">Draft</option>
+        </select>
 
-          {/* Articles */}
-          {filteredArticles.length === 0 ? (
-            <div className="px-4 py-6 text-center text-gray-500">ไม่พบบทความ</div>
-          ) : (
-            filteredArticles.map((article) => (
-              <div
-                key={article.id}
-                className="px-4 py-3 border-b border-gray-200 last:border-0"
-              >
-                <div className="flex flex-col sm:grid sm:grid-cols-12 gap-2 sm:gap-4 sm:items-center">
-                  <div className="sm:col-span-6">
-                    <h3 className="text-sm font-medium text-gray-900 line-clamp-2">
-                      {article.title}
-                    </h3>
+        <select
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className="
+         bg-white w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm"
+        >
+          <option value="">All Categories</option>
+          {categories.map(category => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Articles List */}
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="block sm:hidden">
+          {/* Mobile View */}
+          {currentItems.map((article) => (
+            <div key={article.id} className="p-4 border-b border-gray-200">
+              <div className="mb-2">
+                <div className="text-base font-medium text-gray-900">{article.title}</div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="text-sm text-gray-600">
+                    {categories.find(c => c.id === article.category_id)?.name || 'Uncategorized'}
                   </div>
-                  <div className="flex justify-between items-center sm:col-span-3">
-                    <span className="text-sm text-gray-600 sm:hidden">Category:</span>
-                    <span className="text-sm text-gray-600">
-                      {article.category_name || "ไม่ระบุหมวดหมู่"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center sm:col-span-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm sm:hidden">Status:</span>
-                      <span className={`text-sm ${
-                        article.status === 'published' ? 'text-green-600' : 'text-gray-600'
-                      }`}>
-                        {article.status}
-                      </span>
-                    </div>
-                    <div className="flex gap-2">
-                      <Link to={`/edit-article/${article.id}`} className="p-1 text-gray-400 hover:text-gray-600">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg>
-                      </Link>
-                      <button 
-                        onClick={() => handleDelete(article.id)} 
-                        className="p-1 text-gray-400 hover:text-red-600"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
+                  <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                    article.status === 'published'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {article.status}
+                  </span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Link
+                    to={`/edit-article/${article.id}`}
+                    className="text-gray-600 hover:text-gray-900 p-2"
+                  >
+                    <FiEdit2 className="w-5 h-5" />
+                  </Link>
+                  <button 
+                    onClick={() => handleDeleteClick(article)}
+                    className="text-gray-600 hover:text-red-600 cursor-pointer p-2"
+                  >
+                    <FiTrash2 className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
-            ))
-          )}
+            </div>
+          ))}
         </div>
+
+        {/* Desktop View - ไม่เปลี่ยนแปลง */}
+        <table className="min-w-full divide-y divide-gray-200 hidden sm:table">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                TITLE
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                CATEGORY
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                STATUS
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                ACTIONS
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {currentItems.map((article) => (
+              <tr key={article.id}>
+                <td className="px-6 py-4">
+                  <div className="text-sm text-gray-900">{article.title}</div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="text-sm text-gray-900">
+                    {categories.find(c => c.id === article.category_id)?.name || 'Uncategorized'}
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                    article.status === 'published'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {article.status}
+                    </span>
+                </td>
+                <td className="px-6 py-4 text-sm font-medium">
+                  <div className="flex items-center space-x-4">
+                    <Link
+                      to={`/edit-article/${article.id}`}
+                      className="text-gray-600 hover:text-gray-900"
+                      title="Edit this article"
+                    >
+                      <FiEdit2 className="w-5 h-5" />
+                    </Link>
+                    <button 
+                      onClick={() => handleDeleteClick(article)}
+                      className="text-gray-600 hover:text-red-600 cursor-pointer"
+                      title="Delete this article"
+                    >
+                      <FiTrash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center space-x-2 mt-6 pb-6">
+          <button
+            onClick={() => paginate(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-2 sm:px-3 py-1 rounded-md bg-white border border-gray-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+          >
+            <FiChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
+          
+          {[...Array(totalPages)].map((_, index) => (
+            <button
+              key={index + 1}
+              onClick={() => paginate(index + 1)}
+              className={`w-8 h-8 sm:px-3 sm:py-1 rounded-md text-sm flex items-center justify-center ${
+                currentPage === index + 1
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-white border border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              {index + 1}
+            </button>
+          ))}
+          
+          <button
+            onClick={() => paginate(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="px-2 sm:px-3 py-1 rounded-md bg-white border border-gray-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+          >
+            <FiChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
+        </div>
+      )}
+
+      {/* Delete Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+          <div className="bg-white/90 backdrop-blur-md rounded-lg p-6 w-full max-w-[400px] shadow-lg mx-4">
+            <h2 className="text-xl font-semibold mb-4">Delete article</h2>
+            <p className="text-gray-600 mb-6">Do you want to delete this article?</p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={handleCancelDelete}
+                className="px-4 sm:px-6 py-2 text-sm font-medium text-gray-700 bg-white/80 border border-gray-300 rounded-full hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 sm:px-6 py-2 text-sm font-medium text-white bg-red-600/90 rounded-full hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
