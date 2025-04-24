@@ -62,10 +62,16 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
     try {
         const categories = await Category.findAll();
-        res.json(categories);
+        res.json({
+            status: 'success',
+            data: categories
+        });
     } catch (error) {
         console.error('Error fetching categories:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ 
+            status: 'error',
+            message: 'Internal server error' 
+        });
     }
 });
 

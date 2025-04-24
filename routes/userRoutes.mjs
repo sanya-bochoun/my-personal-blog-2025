@@ -7,7 +7,8 @@ import {
   getProfile,
   updateProfile,
   uploadAvatar,
-  changePassword
+  changePassword,
+  resetPassword
 } from '../controllers/userController.mjs';
 
 const router = express.Router();
@@ -46,5 +47,11 @@ router.get('/profile', authenticateToken, getProfile);
 router.put('/profile', authenticateToken, profileValidation, validateRequest, updateProfile);
 router.post('/avatar', authenticateToken, upload.single('avatar'), uploadAvatar);
 router.put('/password', authenticateToken, passwordValidation, validateRequest, changePassword);
+
+// Protected routes (ต้องล็อกอินก่อน)
+router.use(authenticateToken);
+
+// เปลี่ยนรหัสผ่าน
+router.put('/reset-password', resetPassword);
 
 export default router; 
