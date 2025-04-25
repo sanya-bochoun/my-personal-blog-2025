@@ -5,20 +5,13 @@ import { authenticateToken } from '../middleware/auth.mjs';
 import { Article } from '../models/Article.mjs';
 import { Category } from '../models/Category.mjs';
 import { Op } from 'sequelize';
+import { cloudinary } from '../config/cloudinary.mjs';
+import { Readable } from 'stream';
 
 const router = express.Router();
 
-// Set up multer for file upload
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
+// Set up multer for memory storage
+const storage = multer.memoryStorage();
 const upload = multer({ 
   storage: storage,
   limits: {
@@ -26,19 +19,37 @@ const upload = multer({
   }
 });
 
+// Function to upload buffer to Cloudinary
+const uploadToCloudinary = (buffer) => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: 'articles',
+      },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+
+    const readableStream = new Readable();
+    readableStream.push(buffer);
+    readableStream.push(null);
+    readableStream.pipe(uploadStream);
+  });
+};
+
 // Get user's articles
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const articles = await Article.findAll({
-      where: {
-        author_id: req.user.id
-      },
-      include: [{
-        model: Category,
-        attributes: ['id', 'name']
-      }],
-      order: [['created_at', 'DESC']]
-    });
+    let where = {};
+    
+    // ถ้าไม่ใช่ admin หรือไม่ได้ขอดูทั้งหมด ให้ดูเฉพาะบทความของตัวเอง
+    if (req.user.role !== 'admin' || !req.query.viewAll) {
+      where.author_id = req.user.id;
+    }
+
+    const articles = await Article.findAll({ where });
 
     res.json({
       status: 'success',
@@ -57,19 +68,17 @@ router.get('/', authenticateToken, async (req, res) => {
 router.get('/search', authenticateToken, async (req, res) => {
   try {
     const { q } = req.query;
-    const articles = await Article.findAll({
-      where: {
-        author_id: req.user.id,
-        title: {
-          [Op.like]: `%${q}%`
-        }
-      },
-      include: [{
-        model: Category,
-        attributes: ['id', 'name']
-      }],
-      order: [['created_at', 'DESC']]
-    });
+    let where = {};
+
+    // ถ้าไม่ใช่ admin หรือไม่ได้ขอดูทั้งหมด ให้ดูเฉพาะบทความของตัวเอง
+    if (req.user.role !== 'admin' || !req.query.viewAll) {
+      where.author_id = req.user.id;
+    }
+
+    // เพิ่มเงื่อนไขการค้นหาชื่อบทความ
+    where.title = { like: `%${q}%` };
+
+    const articles = await Article.findAll({ where });
 
     res.json({
       status: 'success',
@@ -122,6 +131,20 @@ router.post('/', authenticateToken, upload.single('thumbnailImage'), async (req,
       });
     }
 
+    let thumbnailUrl = null;
+    if (req.file) {
+      try {
+        const result = await uploadToCloudinary(req.file.buffer);
+        thumbnailUrl = result.secure_url;
+      } catch (uploadError) {
+        console.error('Error uploading to Cloudinary:', uploadError);
+        return res.status(500).json({
+          status: 'error',
+          message: 'Failed to upload image'
+        });
+      }
+    }
+
     const articleData = {
       title,
       content: content || '',
@@ -129,7 +152,7 @@ router.post('/', authenticateToken, upload.single('thumbnailImage'), async (req,
       author_id: authorId,
       introduction: introduction || '',
       status: status || 'draft',
-      thumbnail_image: req.file ? `/uploads/${req.file.filename}` : null
+      thumbnail_url: thumbnailUrl
     };
 
     const article = await Article.create(articleData);
@@ -151,6 +174,7 @@ router.post('/', authenticateToken, upload.single('thumbnailImage'), async (req,
 // Update article
 router.put('/:id', authenticateToken, upload.single('thumbnailImage'), async (req, res) => {
   try {
+    console.log('Received update request with body:', req.body);
     const article = await Article.findByPk(req.params.id);
 
     if (!article || article.author_id !== req.user.id) {
@@ -160,18 +184,42 @@ router.put('/:id', authenticateToken, upload.single('thumbnailImage'), async (re
       });
     }
 
-    const { title, content, category_id, introduction, status } = req.body;
+    const { title, content, categoryId, introduction, status } = req.body;
     
+    let thumbnailUrl = article.thumbnail_url;
+    if (req.file) {
+      try {
+        const result = await uploadToCloudinary(req.file.buffer);
+        thumbnailUrl = result.secure_url;
+      } catch (uploadError) {
+        console.error('Error uploading to Cloudinary:', uploadError);
+        return res.status(500).json({
+          status: 'error',
+          message: 'Failed to upload image'
+        });
+      }
+    }
+
     const updateData = {
       title: title || article.title,
       content: content || article.content,
-      category_id: category_id ? parseInt(category_id) : article.category_id,
+      category_id: categoryId ? parseInt(categoryId, 10) : article.category_id,
       introduction: introduction || article.introduction,
       status: status || article.status,
-      thumbnail_image: req.file ? `/uploads/${req.file.filename}` : article.thumbnail_image
+      thumbnail_url: thumbnailUrl
     };
 
-    const updatedArticle = await Article.update(article.id, updateData);
+    console.log('Update data:', updateData);
+
+    // เรียกใช้ update method ที่ถูกต้อง
+    const updatedArticle = await Article.update(req.params.id, updateData);
+
+    if (!updatedArticle) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Failed to update article'
+      });
+    }
 
     res.json({
       status: 'success',
@@ -182,7 +230,43 @@ router.put('/:id', authenticateToken, upload.single('thumbnailImage'), async (re
     console.error('Error updating article:', error);
     res.status(500).json({
       status: 'error',
-      message: 'Failed to update article'
+      message: 'Failed to update article',
+      error: error.message
+    });
+  }
+});
+
+// Delete article
+router.delete('/:id', authenticateToken, async (req, res) => {
+  try {
+    const article = await Article.findByPk(req.params.id);
+
+    if (!article || article.author_id !== req.user.id) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Article not found'
+      });
+    }
+
+    const deleted = await Article.destroy(req.params.id);
+
+    if (!deleted) {
+      return res.status(500).json({
+        status: 'error',
+        message: 'Failed to delete article'
+      });
+    }
+
+    res.json({
+      status: 'success',
+      message: 'Article deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting article:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to delete article',
+      error: error.message
     });
   }
 });

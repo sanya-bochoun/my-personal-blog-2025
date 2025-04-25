@@ -32,6 +32,7 @@ import AdminResetUserPassword from './pages/admin/AdminResetUserPassword'
 import CreateArticle from './pages/CreateArticle'
 import AdminEditArticle from './pages/admin/EditArticle'
 import EditArticle from './pages/EditArticle'
+import ErrorBoundary from './components/ErrorBoundary'
 
 // สร้าง Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -109,9 +110,11 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/create-article" element={
-            <ProtectedRoute>
-              <MainLayout><CreateArticle /></MainLayout>
-            </ProtectedRoute>
+            <ErrorBoundary>
+              <ProtectedRoute>
+                <MainLayout><CreateArticle /></MainLayout>
+              </ProtectedRoute>
+            </ErrorBoundary>
           } />
           <Route path="/admin/category-management" element={<ProtectedRoute><CategoryManagement /></ProtectedRoute>} />
           <Route path="/admin/create-category" element={<ProtectedRoute><CreateCategory /></ProtectedRoute>} />

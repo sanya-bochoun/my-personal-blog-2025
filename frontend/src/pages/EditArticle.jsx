@@ -100,35 +100,41 @@ function EditArticle() {
     setIsSaving(true);
     try {
       const token = localStorage.getItem('accessToken');
-      const submitData = new FormData();
       
-      submitData.append('title', formData.title);
-      submitData.append('content', formData.content);
-      submitData.append('category_id', formData.category);
-      submitData.append('introduction', formData.introduction);
-      submitData.append('status', 'draft');
-      
-      if (formData.thumbnailFile) {
-        submitData.append('thumbnailImage', formData.thumbnailFile);
+      // ตรวจสอบข้อมูลที่จำเป็น
+      if (!formData.title || !formData.category) {
+        toast.error('Title and category are required');
+        return;
       }
 
-      const response = await axios.put(`${API_URL}/api/articles/${id}`, submitData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
+      const submitData = {
+        title: formData.title,
+        content: formData.content,
+        categoryId: formData.category,
+        introduction: formData.introduction,
+        status: 'draft'
+      };
+
+      console.log('Sending data:', submitData);
+
+      const response = await axios.put(
+        `${API_URL}/api/articles/${id}`,
+        submitData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         }
-      });
+      );
 
       if (response.data.status === 'success') {
-        await new Promise(resolve => setTimeout(resolve, 1000)); // รอ 1 วินาที
         toast.success('Article saved as draft');
         navigate('/article-management');
-      } else {
-        toast.error('Failed to save article');
       }
     } catch (error) {
-      console.error('Error saving article:', error);
-      toast.error('Error saving article. Please try again.');
+      console.error('Error details:', error.response?.data);
+      toast.error(error.response?.data?.message || 'Failed to save article');
     } finally {
       setIsSaving(false);
     }
@@ -138,35 +144,41 @@ function EditArticle() {
     setIsPublishing(true);
     try {
       const token = localStorage.getItem('accessToken');
-      const submitData = new FormData();
       
-      submitData.append('title', formData.title);
-      submitData.append('content', formData.content);
-      submitData.append('category_id', formData.category);
-      submitData.append('introduction', formData.introduction);
-      submitData.append('status', 'published');
-      
-      if (formData.thumbnailFile) {
-        submitData.append('thumbnailImage', formData.thumbnailFile);
+      // ตรวจสอบข้อมูลที่จำเป็น
+      if (!formData.title || !formData.category) {
+        toast.error('Title and category are required');
+        return;
       }
 
-      const response = await axios.put(`${API_URL}/api/articles/${id}`, submitData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
+      const submitData = {
+        title: formData.title,
+        content: formData.content,
+        categoryId: formData.category,
+        introduction: formData.introduction,
+        status: 'published'
+      };
+
+      console.log('Sending data:', submitData);
+
+      const response = await axios.put(
+        `${API_URL}/api/articles/${id}`,
+        submitData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         }
-      });
+      );
 
       if (response.data.status === 'success') {
-        await new Promise(resolve => setTimeout(resolve, 1000)); // รอ 1 วินาที
         toast.success('Article published successfully');
         navigate('/article-management');
-      } else {
-        toast.error('Failed to publish article');
       }
     } catch (error) {
-      console.error('Error publishing article:', error);
-      toast.error('Error publishing article. Please try again.');
+      console.error('Error details:', error.response?.data);
+      toast.error(error.response?.data?.message || 'Failed to publish article');
     } finally {
       setIsPublishing(false);
     }
@@ -199,15 +211,31 @@ function EditArticle() {
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto order-2">
               <button
                 onClick={handleSaveAsDraft}
-                className="w-full sm:w-auto px-[40px] py-[12px] text-sm font-medium text-[#26231E] bg-white border border-gray-300 rounded-full hover:bg-gray-50 sm:cursor-pointer"
+                disabled={isSaving}
+                className="w-full sm:w-auto px-[40px] py-[12px] text-sm font-medium text-[#26231E] bg-white border border-gray-300 rounded-full hover:bg-gray-50 sm:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Save as draft
+                {isSaving ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <FiLoader className="w-4 h-4 animate-spin" />
+                    <span>Saving...</span>
+                  </div>
+                ) : (
+                  'Save as draft'
+                )}
               </button>
               <button
                 onClick={handlePublish}
-                className="w-full sm:w-auto px-[40px] py-[12px] text-sm font-medium text-white bg-[#26231E] rounded-full hover:bg-gray-800 sm:cursor-pointer"
+                disabled={isPublishing}
+                className="w-full sm:w-auto px-[40px] py-[12px] text-sm font-medium text-white bg-[#26231E] rounded-full hover:bg-gray-800 sm:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Save and publish
+                {isPublishing ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <FiLoader className="w-4 h-4 animate-spin" />
+                    <span>Publishing...</span>
+                  </div>
+                ) : (
+                  'Save and publish'
+                )}
               </button>
             </div>
           </div>

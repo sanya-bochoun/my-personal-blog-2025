@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { FiEdit2, FiTrash2, FiLoader, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { useAuth } from '../context/AuthContext';
 
 function ArticleManagement() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -13,21 +14,25 @@ function ArticleManagement() {
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedArticleId, setSelectedArticleId] = useState(null);
+  const [viewAllArticles, setViewAllArticles] = useState(false);
+  const [isNavigatingBack, setIsNavigatingBack] = useState(false);
+  const { user } = useAuth();
   
   // เพิ่ม state สำหรับ pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const navigate = useNavigate();
     
   // Fetch articles
-    const fetchArticles = async () => {
-      try {
+  const fetchArticles = async () => {
+    try {
       setLoading(true);
       const token = localStorage.getItem('accessToken');
       // Add 1 second delay
       await new Promise(resolve => setTimeout(resolve, 1000));
-      const response = await axios.get(`${API_URL}/api/articles`, {
+      const response = await axios.get(`${API_URL}/api/articles${viewAllArticles ? '?viewAll=true' : ''}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -52,11 +57,14 @@ function ArticleManagement() {
     try {
       const token = localStorage.getItem('accessToken');
       if (e.target.value.trim()) {
-        const response = await axios.get(`${API_URL}/api/articles/search?q=${e.target.value}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
+        const response = await axios.get(
+          `${API_URL}/api/articles/search?q=${e.target.value}${viewAllArticles ? '&viewAll=true' : ''}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
           }
-        });
+        );
         if (response.data.status === 'success') {
           setArticles(response.data.data);
         }
@@ -69,12 +77,17 @@ function ArticleManagement() {
     }
   };
 
+  // Toggle view all articles
+  const handleViewAllToggle = () => {
+    setViewAllArticles(!viewAllArticles);
+  };
+
   // Fetch categories
-    const fetchCategories = async () => {
-      try {
+  const fetchCategories = async () => {
+    try {
       const response = await axios.get(`${API_URL}/api/categories`);
       if (response.data.status === 'success') {
-          setCategories(response.data.data);
+        setCategories(response.data.data);
       }
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -85,7 +98,7 @@ function ArticleManagement() {
   useEffect(() => {
     fetchArticles();
     fetchCategories();
-  }, []);
+  }, [viewAllArticles]); // เพิ่ม viewAllArticles เป็น dependency
 
   // Filter articles
   const filteredArticles = articles.filter(article => {
@@ -121,30 +134,39 @@ function ArticleManagement() {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await axios.delete(`${API_URL}/api/articles/${selectedArticleId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
         
       if (response.data.status === 'success') {
-        toast.success('Article deleted successfully');
-        fetchArticles();
+        toast.success(response.data.message);
+        // อัพเดทรายการบทความทันที
+        setArticles(articles.filter(article => article.id !== selectedArticleId));
       } else {
-        toast.error('Failed to delete article');
+        toast.error(response.data.message || 'Failed to delete article');
       }
     } catch (error) {
       console.error('Error deleting article:', error);
-      toast.error('Error deleting article. Please try again.');
+      toast.error(error.response?.data?.message || 'Error deleting article. Please try again.');
     } finally {
       setSelectedArticleId(null);
       setShowDeleteModal(false);
     }
   };
 
+  const handleBackClick = async () => {
+    setIsNavigatingBack(true);
+    // เพิ่ม delay เล็กน้อยเพื่อให้เห็น loading state
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    navigate(-1);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <FiLoader className="w-8 h-8 text-gray-400 animate-spin" />
+        <FiLoader className="w-8 h-8 text-gray-400 animate-spin mr-2" />
+        <span className="text-gray-500">Loading...</span>
       </div>
     );
   }
@@ -153,10 +175,34 @@ function ArticleManagement() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-12 mb-81 text-left min-h-screen sm:mt-20">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <h1 className="text-2xl sm:text-2xl font-semibold text-gray-900 order-1 sm:order-none text-center sm:text-left">My Articles</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <button
+            onClick={handleBackClick}
+            disabled={isNavigatingBack}
+            className="w-full sm:w-auto px-[40px] py-[12px] text-sm font-medium text-[#26231E] bg-white border border-gray-300 rounded-[999px] hover:bg-gray-50 sm:cursor-pointer sm:px-[40px]py-[12px] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isNavigatingBack ? (
+              <>
+                <FiLoader className="w-4 h-4 animate-spin" />
+                <span>Loading...</span>
+              </>
+            ) : (
+              'Back'
+            )}
+          </button>
+          <h1 className="text-2xl sm:text-2xl font-semibold text-gray-900">My Articles</h1>
+          {user?.role === 'admin' && (
+            <button
+              onClick={handleViewAllToggle}
+              className="text-sm font-medium text-gray-600 hover:text-gray-900"
+            >
+              {viewAllArticles ? 'View My Articles' : 'View All Articles'}
+            </button>
+          )}
+        </div>
         <Link
           to="/create-article"
-          className="w-full sm:w-auto px-4 sm:px-[40px] py-[12px] sm:py-[12px] text-sm font-medium text-white bg-gray-900 rounded-[999px] hover:bg-gray-800 flex items-center gap-2 justify-center sm:justify-start order-2 sm:order-none"
+          className="w-full sm:w-auto px-4 sm:px-[40px] py-[12px] sm:py-[12px] text-sm font-medium text-white bg-gray-900 rounded-[999px] hover:bg-gray-800 flex items-center gap-2 justify-center sm:justify-start"
         >
           <span>+</span> Create article
         </Link>

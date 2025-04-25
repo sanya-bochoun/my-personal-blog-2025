@@ -1,6 +1,17 @@
 {
   "dependencies": {
+    "axios": "^1.9.0",
     "mysql2": "^3.14.0",
     "sequelize": "^6.37.7"
+  },
+  "scripts": {
+    "test": "jest",
+    "test:api": "newman run thunder-collection.json -e test-environment.json",
+    "test:all": "npm run test && npm run test:api"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "newman": "^5.3.0",
+    "supertest": "^6.3.0"
   }
 }
