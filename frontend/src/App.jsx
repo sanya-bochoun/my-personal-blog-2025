@@ -88,8 +88,7 @@ function App() {
 
           {/* Main Website Routes */}
           <Route path="/" element={<MainLayout><><HeroSection /><ArticleSection /></></MainLayout>} />
-          <Route path="/posts/:slug" element={<MainLayout><ArticleDetail /></MainLayout>} />
-          <Route path="/article/:id" element={<MainLayout><ArticleDetail /></MainLayout>} />
+          <Route path="/article/:slug" element={<MainLayout><ArticleDetail /></MainLayout>} />
           <Route path="/signup" element={<MainLayout><SignUp /></MainLayout>} />
           <Route path="/login" element={<MainLayout><Login /></MainLayout>} />
           <Route path="/forgot-password" element={<MainLayout><ForgotPassword /></MainLayout>} />

@@ -11,9 +11,9 @@ const SearchDropdown = ({ results, isVisible, onSelect }) => {
           <li 
             key={result.id}
             className="p-3 hover:bg-gray-50 cursor-pointer"
-            onClick={() => onSelect(result.id)}
+            onClick={() => onSelect(result.slug)}
           >
-            <Link to={`/article/${result.id}`} className="block">
+            <Link to={`/article/${result.slug}`} className="block">
               <div className="flex flex-col text-left">
                 <span className="font-medium text-gray-900">{result.title}</span>
                 <span className="text-sm text-gray-500 truncate">{result.description}</span>

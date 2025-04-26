@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'https://blog-post-project-api.vercel.app';
+const BASE_URL = 'http://localhost:5000';
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -16,7 +16,7 @@ export const fetchPosts = async ({ page = 1, limit = 6, category = '', keyword =
       ...(keyword && { keyword })
     };
 
-    const response = await api.get('/posts', { params });
+    const response = await api.get('/api/posts', { params });
     return response.data;
   } catch (error) {
     console.error('Error fetching posts:', error);

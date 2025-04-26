@@ -38,7 +38,7 @@ export const getPosts = async ({ page = 1, limit = 10, category, author, tag, se
     }
 
     if (search) {
-      queryText += ` AND (p.title ILIKE $${valueIndex} OR p.content ILIKE $${valueIndex})`;
+      queryText += ` AND (p.title ILIKE $${valueIndex})`;
       values.push(`%${search}%`);
       valueIndex++;
     }

@@ -8,14 +8,13 @@ import { fetchPosts } from '../services/api';
 import { formatDate } from '../utils/date';
 import axios from 'axios';
 
-const categories = ["Highlight", "Cat", "Inspiration", "General"];
-
 const LOADING_DELAY = 1000; // 1 second delay
-const BASE_URL = 'https://blog-post-project-api.vercel.app';
+const BASE_URL = 'http://localhost:5000';
 
 const ArticleSection = () => {
   const navigate = useNavigate();
-  const [selectedCategory, setSelectedCategory] = useState('Highlight');
+  const [categories, setCategories] = useState([{ id: 0, name: 'Highlight' }]); // เปลี่ยนเป็น array ของ object
+  const [selectedCategory, setSelectedCategory] = useState(0); // เก็บ id
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
@@ -27,6 +26,7 @@ const ArticleSection = () => {
   const [error, setError] = useState(null);
   const searchRef = useRef(null);
   const searchMobileRef = useRef(null);
+  const [showMoreDropdown, setShowMoreDropdown] = useState(false);
   
   // ผสาน click outside effect
   useEffect(() => {
@@ -45,14 +45,36 @@ const ArticleSection = () => {
     };
   }, []);
 
-  const handleArticleClick = (id) => {
-    navigate(`/article/${id}`);
+  // เพิ่มฟังก์ชันสำหรับดึงข้อมูล categories
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/api/categories`);
+      // ดึงข้อมูลจาก response.data.data ตามที่ API ส่งกลับมา
+      const categoryObjs = [{ id: 0, name: 'Highlight' }, ...response.data.data.map(cat => ({ id: cat.id, name: cat.name }))];
+      setCategories(categoryObjs);
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+      setCategories([{ id: 0, name: 'Highlight' }, { id: 1, name: 'Cat' }, { id: 2, name: 'Inspiration' }, { id: 3, name: 'General' }]);
+    }
+  };
+
+  // เรียกใช้ฟังก์ชัน fetchCategories เมื่อ component โหลด
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const handleArticleClick = (slug) => {
+    if (!slug) {
+      console.error('No slug provided to handleArticleClick!', slug);
+      return;
+    }
+    navigate(`/article/${slug}`);
     setShowSearchResults(false);
     setSearchTerm('');
   };
 
   const fetchSearchResults = async (query) => {
-    if (!query || query.length < 1) {
+    if (!query || query.length < 2) {
       setSearchResults([]);
       setShowSearchResults(false);
       return;
@@ -60,17 +82,23 @@ const ArticleSection = () => {
 
     setIsSearching(true);
     try {
-      const response = await axios.get(`${BASE_URL}/posts`, {
+      const response = await axios.get(`${BASE_URL}/api/posts`, {
         params: {
-          keyword: query,
+          search: query,
           limit: 5 // จำกัดผลลัพธ์ให้แสดงแค่ 5 รายการ
         }
       });
-      
-      setSearchResults(response.data.posts);
+      setSearchResults(
+        response.data.data.posts.map(post => ({
+          ...post,
+          slug: post.slug || '',
+        }))
+      );
       setShowSearchResults(true);
     } catch (err) {
       console.error('Error searching posts:', err);
+      setSearchResults([]);
+      setShowSearchResults(false);
     } finally {
       setIsSearching(false);
     }
@@ -86,14 +114,16 @@ const ArticleSection = () => {
       
       const data = await fetchPosts({
         page,
-        category: selectedCategory === 'Highlight' ? '' : selectedCategory,
+        category: selectedCategory === 0 ? '' : selectedCategory,
         keyword: searchTerm
       });
       
       // Format dates before setting posts
-      const formattedPosts = data.posts.map(post => ({
+      console.log('Raw posts from backend:', data.data.posts); // log posts
+      const formattedPosts = data.data.posts.map(post => ({
         ...post,
-        date: formatDate(post.date)
+        date: formatDate(post.created_at || post.date),
+        slug: post.slug || '', // fallback ถ้าไม่มี slug
       }));
       
       if (page === 1) {
@@ -105,7 +135,7 @@ const ArticleSection = () => {
       }
 
       // Check if we have more posts to load
-      setHasMore(data.currentPage < data.totalPages);
+      setHasMore(data.data.current_page < data.data.total_pages);
     } catch (err) {
       setError('Failed to load posts. Please try again later.');
       console.error('Error loading posts:', err);
@@ -144,6 +174,10 @@ const ArticleSection = () => {
     setCurrentPage(nextPage);
     loadPosts(nextPage);
   };
+
+  // แยก categories เป็น 5 อันแรก (ไม่รวม Highlight) และที่เหลือ
+  const mainCategories = categories.slice(0, 6); // Highlight + 5 อันแรก
+  const extraCategories = categories.length > 6 ? categories.slice(6) : [];
 
   return (
     <section className={cn("article-section", STYLES.layout.wrapper, "w-full bg-[#F8F7F6]")}>
@@ -200,7 +234,7 @@ const ArticleSection = () => {
                   className={cn("category-mobile-select", STYLES.components.article.search.mobile.category.select.field)}
                 >
                   {categories.map((category) => (
-                    <option key={category} value={category}>{category}</option>
+                    <option key={category.id} value={category.id}>{category.name}</option>
                   ))}
                 </select>
                 <div className={cn("category-mobile-select-icon", STYLES.components.article.search.mobile.category.select.icon)}>
@@ -215,21 +249,52 @@ const ArticleSection = () => {
           {/* Desktop View */}
           <nav className={cn("search-desktop", STYLES.components.article.search.desktop.wrapper)}>
             <div className={cn("search-desktop-container", STYLES.components.article.search.desktop.container, "flex justify-between items-center")}>
-              <div className="category-buttons">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
+              <div className="category-buttons flex items-center gap-2">
+                {/* แสดง 5 อันแรกเป็น text เฉยๆ */}
+                {mainCategories.map((category) => (
+                  <span
+                    key={category.id}
+                    onClick={() => setSelectedCategory(category.id)}
                     className={cn(
-                      "category-button",
-                      selectedCategory === category
-                        ? STYLES.components.article.search.desktop.button.active
-                        : STYLES.components.article.search.desktop.button.inactive
+                      "cursor-pointer px-2 py-1 text-base rounded transition",
+                      selectedCategory === category.id ? STYLES.components.article.search.desktop.button.active : STYLES.components.article.search.desktop.button.inactive
                     )}
                   >
-                    {category}
-                  </button>
+                    {category.name}
+                  </span>
                 ))}
+                {/* ถ้ามีมากกว่า 5 อัน ให้แสดง custom dropdown (More) */}
+                {extraCategories.length > 0 && (
+                  <div className="relative ml-2">
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 px-2 py-1 bg-transparent text-base cursor-pointer select-none"
+                      onClick={() => setShowMoreDropdown((prev) => !prev)}
+                      onBlur={() => setTimeout(() => setShowMoreDropdown(false), 150)}
+                    >
+                      More
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
+                    {showMoreDropdown && (
+                      <div className="absolute left-0 mt-1 w-32 bg-white border border-gray-200 rounded shadow z-10">
+                        {extraCategories.map((category) => (
+                          <div
+                            key={category.id}
+                            onClick={() => { setSelectedCategory(category.id); setShowMoreDropdown(false); }}
+                            className={cn(
+                              "px-4 py-2 cursor-pointer hover:bg-gray-100 text-base rounded transition",
+                              selectedCategory === category.id ? STYLES.components.article.search.desktop.button.active : STYLES.components.article.search.desktop.button.inactive
+                            )}
+                          >
+                            {category.name}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               
               <div ref={searchRef} className={cn("search-desktop-input-container", STYLES.components.article.search.desktop.input.container, "relative w-full md:w-[350px] lg:w-[400px] xl:w-[450px]")}>
@@ -287,12 +352,14 @@ const ArticleSection = () => {
               <BlogCard
                 key={post.id}
                 id={post.id}
-                image={post.image}
-                category={post.category}
+                slug={post.slug}
+                image={post.thumbnail_url || post.image}
+                category={post.category_name || post.category}
                 title={post.title}
-                description={post.description}
-                author={post.author}
-                date={post.date}
+                description={post.excerpt || post.description}
+                author={post.author_name || post.author}
+                authorImage={post.author_avatar || post.authorImage}
+                date={formatDate(post.created_at || post.date)}
                 onClick={handleArticleClick}
               />
             ))}

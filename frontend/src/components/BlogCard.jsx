@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from "@/lib/utils";
 
 function BlogCard({
-  id,
+  slug,
   image,
   category,
   title,
@@ -14,13 +14,13 @@ function BlogCard({
 }) {
   const handleClick = (e) => {
     e.preventDefault();
-    onClick?.(id);
+    onClick?.(slug);
   };
 
   return (
     <article className={cn("blog-card", "flex flex-col gap-4")}>
       <a 
-        href={`/article/${id}`} 
+        href={`/article/${slug}`} 
         onClick={handleClick}
         className={cn(
           "blog-image-link",
@@ -57,7 +57,7 @@ function BlogCard({
           </span>
         </div>
         <a 
-          href={`/article/${id}`}
+          href={`/article/${slug}`}
           onClick={handleClick}
           className="cursor-pointer"
         >
@@ -74,17 +74,15 @@ function BlogCard({
         )}>
           {description}
         </p>
-        <div className={cn("blog-author", "flex items-center text-sm")}>
-          {authorImage && (
-            <img 
-              className="w-8 h-8 rounded-full mr-2" 
-              src={authorImage} 
-              alt={author} 
-            />
-          )}
-          <span>{author}</span>
-          <span className="mx-2 text-gray-300">|</span>
-          <span>{date}</span>
+        <div className={cn("blog-author", "flex items-center gap-2 mt-2")}> 
+          <img 
+            className="w-6 h-6 rounded-full object-cover" 
+            src={authorImage || '/default-avatar.png'} 
+            alt={author} 
+          />
+          <span className="text-sm font-medium">{author}</span>
+          <span className="mx-2 text-gray-400">|</span>
+          <span className="text-sm text-gray-500">{date}</span>
         </div>
       </div>
     </article>
