@@ -273,4 +273,126 @@ export const togglePublishStatus = async (id, userId) => {
   } catch (error) {
     throw new Error(`Failed to toggle post status: ${error.message}`);
   }
+};
+
+// Like a post
+export const likePost = async (postId, userId) => {
+  try {
+    // Check if post exists
+    const post = await query('SELECT id FROM posts WHERE id = $1', [postId]);
+    if (post.rows.length === 0) {
+      throw new Error('ไม่พบบทความที่ต้องการ');
+    }
+
+    // Check if already liked
+    const existingLike = await query(
+      'SELECT * FROM post_like WHERE post_id = $1 AND user_id = $2',
+      [postId, userId]
+    );
+
+    if (existingLike.rows.length > 0) {
+      throw new Error('คุณได้กดไลค์บทความนี้ไปแล้ว');
+    }
+
+    // Add like
+    await query(
+      'INSERT INTO post_like (post_id, user_id) VALUES ($1, $2)',
+      [postId, userId]
+    );
+
+    // Get total likes count
+    const likesCount = await query(
+      'SELECT COUNT(*) as count FROM post_like WHERE post_id = $1',
+      [postId]
+    );
+
+    return {
+      likes_count: parseInt(likesCount.rows[0].count)
+    };
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+// Unlike a post
+export const unlikePost = async (postId, userId) => {
+  try {
+    // Check if post exists
+    const post = await query('SELECT id FROM posts WHERE id = $1', [postId]);
+    if (post.rows.length === 0) {
+      throw new Error('ไม่พบบทความที่ต้องการ');
+    }
+
+    // Check if like exists
+    const existingLike = await query(
+      'SELECT * FROM post_like WHERE post_id = $1 AND user_id = $2',
+      [postId, userId]
+    );
+
+    if (existingLike.rows.length === 0) {
+      throw new Error('คุณยังไม่ได้กดไลค์บทความนี้');
+    }
+
+    // Remove like
+    await query(
+      'DELETE FROM post_like WHERE post_id = $1 AND user_id = $2',
+      [postId, userId]
+    );
+
+    // Get total likes count
+    const likesCount = await query(
+      'SELECT COUNT(*) as count FROM post_like WHERE post_id = $1',
+      [postId]
+    );
+
+    return {
+      likes_count: parseInt(likesCount.rows[0].count)
+    };
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+// Get post likes count
+export const getPostLikes = async (postId, userId = null) => {
+  try {
+    // Check if post exists first
+    const post = await query('SELECT id FROM posts WHERE id = $1', [postId]);
+    if (post.rows.length === 0) {
+      throw new Error('ไม่พบบทความที่ต้องการ');
+    }
+
+    const likesCount = await query(
+      'SELECT COUNT(*) as count FROM post_like WHERE post_id = $1',
+      [postId]
+    );
+
+    let hasLiked = false;
+    if (userId) {
+      const userLike = await query(
+        'SELECT * FROM post_like WHERE post_id = $1 AND user_id = $2',
+        [postId, userId]
+      );
+      hasLiked = userLike.rows.length > 0;
+    }
+
+    return {
+      likes_count: parseInt(likesCount.rows[0].count),
+      has_liked: hasLiked
+    };
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+export default {
+  getPosts,
+  createPost,
+  getPostBySlug,
+  updatePost,
+  deletePost,
+  togglePublishStatus,
+  likePost,
+  unlikePost,
+  getPostLikes
 }; 

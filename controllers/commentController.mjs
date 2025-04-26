@@ -65,7 +65,7 @@ export const getCommentsByPost = async (req, res) => {
   try {
     const { post_id } = req.params;
     const result = await query(
-      `SELECT c.*, u.username 
+      `SELECT c.*, u.username, u.avatar_url 
        FROM comments c 
        JOIN users u ON c.user_id = u.id 
        WHERE c.post_id = $1 

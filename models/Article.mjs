@@ -223,4 +223,55 @@ export class Article {
       throw error;
     }
   }
+
+  // ค้นหาบทความด้วยเงื่อนไข
+  static async findOne({ where = {}, include = [] } = {}) {
+    try {
+      let queryStr = `
+        SELECT 
+          a.id, a.title, a.content, a.excerpt as introduction, a.thumbnail_url, 
+          a.published as status, a.category_id, a.author_id, a.created_at, a.updated_at, a.slug,
+          c.name as "Category.name",
+          u.username as "Author.username",
+          u.avatar_url as "Author.avatar_url",
+          u.bio as "Author.bio"
+        FROM posts a
+        LEFT JOIN categories c ON a.category_id = c.id
+        LEFT JOIN users u ON a.author_id = u.id
+      `;
+
+      // สร้าง WHERE clause
+      const conditions = [];
+      const values = [];
+      let paramIndex = 1;
+
+      // เพิ่มเงื่อนไขจาก where object
+      Object.entries(where).forEach(([key, value]) => {
+        if (value !== undefined) {
+          conditions.push(`a.${key} = $${paramIndex}`);
+          values.push(value);
+          paramIndex++;
+        }
+      });
+
+      if (conditions.length > 0) {
+        queryStr += ` WHERE ${conditions.join(' AND ')}`;
+      }
+      
+      const result = await query(queryStr, values);
+      
+      if (result.rows.length === 0) {
+        return null;
+      }
+      
+      const article = result.rows[0];
+      
+      // แปลงค่า published (boolean) เป็น status (string)
+      article.status = article.status ? 'published' : 'draft';
+      
+      return article;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
