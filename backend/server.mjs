@@ -16,6 +16,7 @@ import { notFoundHandler } from './middleware/notFoundHandler.mjs';
 import notificationRoutes from './routes/notificationRoutes.mjs';
 import adminArticleRoutes from './routes/admin/articleRoutes.mjs';
 import articleRoutes from './routes/articleRoutes.mjs';
+import likeRoutes from './routes/likeRoutes.mjs';
 
 // ES modules fix for __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -87,6 +88,7 @@ app.use('/api', routes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin/articles', adminArticleRoutes);
 app.use('/api/articles', articleRoutes);
+app.use('/api/likes', likeRoutes);
 
 // Test route
 app.get('/', (req, res) => {

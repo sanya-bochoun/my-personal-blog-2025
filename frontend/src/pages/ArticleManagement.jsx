@@ -265,7 +265,9 @@ function ArticleManagement() {
           {currentItems.map((article) => (
             <div key={article.id} className="p-4 border-b border-gray-200">
               <div className="mb-2">
-                <div className="text-base font-medium text-gray-900">{article.title}</div>
+                <Link to={`/posts/${article.slug}`} className="text-base font-medium text-gray-900 hover:text-blue-600">
+                  {article.title}
+                </Link>
               </div>
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
@@ -321,7 +323,9 @@ function ArticleManagement() {
             {currentItems.map((article) => (
               <tr key={article.id}>
                 <td className="px-6 py-4">
-                  <div className="text-sm text-gray-900">{article.title}</div>
+                  <Link to={`/posts/${article.slug}`} className="text-sm text-gray-900 hover:text-blue-600">
+                    {article.title}
+                  </Link>
                 </td>
                 <td className="px-6 py-4">
                   <div className="text-sm text-gray-900">

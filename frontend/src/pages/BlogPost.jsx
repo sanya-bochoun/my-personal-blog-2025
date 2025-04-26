@@ -7,25 +7,29 @@ import { cn } from "@/lib/utils";
 import SocialShareBanner from '@/components/SocialShareBanner';
 import CommentSection from '@/components/CommentSection';
 import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
 
 function BlogPost() {
-  const { id } = useParams();
+  const { slug } = useParams();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { user } = useAuth();
   const defaultImage = '/src/assets/default-avatar.png';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const response = await fetch(`https://blog-post-project-api.vercel.app/posts/${id}`);
+        const response = await axios.get(`${API_URL}/api/articles/detail/${slug}`);
         if (!response.ok) {
           throw new Error('บทความไม่พบ');
         }
         const data = await response.json();
-        setPost(data);
+        console.log('API Response:', data);
+        setPost(data.data);
       } catch (err) {
+        console.error('Error:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -33,7 +37,7 @@ function BlogPost() {
     };
 
     fetchPost();
-  }, [id]);
+  }, [slug, API_URL]);
 
   if (loading) {
     return (
@@ -66,7 +70,7 @@ function BlogPost() {
       {/* Hero Image */}
       <div className="w-full h-[400px] mb-8 rounded-2xl overflow-hidden">
         <img 
-          src={post.image} 
+          src={post.thumbnail_url} 
           alt={post.title}
           className="w-full h-full object-cover"
         />
@@ -80,10 +84,10 @@ function BlogPost() {
               "px-3 py-1 rounded-full text-sm font-medium",
               "bg-green-100 text-green-800"
             )}>
-              {post.category}
+              {post.category_name}
             </span>
             <time className="text-gray-600">
-              {format(new Date(post.date), 'dd MMMM yyyy')}
+              {format(new Date(post.created_at), 'dd MMMM yyyy')}
             </time>
           </div>
 
@@ -91,7 +95,7 @@ function BlogPost() {
           <h1 className="text-4xl font-bold mb-6 text-gray-900 text-left">{post.title}</h1>
 
           {/* Description */}
-          <p className="text-gray-600 text-lg mb-8 text-left">{post.description}</p>
+          <p className="text-gray-600 text-lg mb-8 text-left">{post.excerpt}</p>
 
           {/* Content */}
           <div className="markdown text-left">
@@ -117,18 +121,18 @@ function BlogPost() {
             <aside className="bg-[#F9F9F9] p-6 rounded-xl">
               <div className="flex items-start gap-4 mb-4">
                 <img 
-                  src={user?.avatar_url || defaultImage}
+                  src={post.author_avatar_url || defaultImage}
                   alt="Author"
                   className="w-16 h-16 rounded-full object-cover"
                 />
                 <div>
                   <p className="text-[#777777] text-sm mb-1">Author</p>
-                  <p className="text-xl text-[#4A4A4A]">{user?.username || "Anonymous"}</p>
+                  <p className="text-xl text-[#4A4A4A]">{post.author_name || "Anonymous"}</p>
                 </div>
               </div>
               <div className="prose prose-sm text-left">
                 <p className="text-[#4A4A4A] text-base leading-relaxed">
-                  {user?.bio || "A passionate writer sharing stories and insights with the world."}
+                  {post.author_bio || "A passionate writer sharing stories and insights with the world."}
                 </p>
               </div>
             </aside>
@@ -137,7 +141,7 @@ function BlogPost() {
           {/* Social Share Banner */}
           <div className="mt-8 mb-8">
             <SocialShareBanner 
-              likes={post.likes || 321} 
+              likes={post.view_count || 0} 
               url={window.location.href} 
             />
           </div>
@@ -150,18 +154,18 @@ function BlogPost() {
         <aside className="hidden lg:block bg-[#F9F9F9] p-6 rounded-xl h-fit sticky top-24">
           <div className="flex items-start gap-4 mb-4">
             <img 
-              src={user?.avatar_url || defaultImage}
+              src={post.author_avatar_url || defaultImage}
               alt="Author"
               className="w-16 h-16 rounded-full object-cover"
             />
             <div>
               <p className="text-[#777777] text-sm mb-1">Author</p>
-              <p className="text-xl text-[#4A4A4A]">{user?.username || "Anonymous"}</p>
+              <p className="text-xl text-[#4A4A4A]">{post.author_name || "Anonymous"}</p>
             </div>
           </div>
           <div className="prose prose-sm text-left">
             <p className="text-[#4A4A4A] text-base leading-relaxed">
-              {user?.bio || "A passionate writer sharing stories and insights with the world."}
+              {post.author_bio || "A passionate writer sharing stories and insights with the world."}
             </p>
           </div>
         </aside>
