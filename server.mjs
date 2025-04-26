@@ -53,6 +53,8 @@ const corsOptions = {
     const allowedOrigins = [
       'http://localhost:5173',  // Vite dev server
       'http://localhost:3000',  // Alternative dev port
+      'http://127.0.0.1:5173',  // Vite dev server alternative
+      'http://127.0.0.1:3000',  // Alternative dev port
       process.env.FRONTEND_URL  // Production URL
     ].filter(Boolean); // กรองค่า null/undefined ออก
     
@@ -60,6 +62,7 @@ const corsOptions = {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.log('Blocked origin:', origin); // เพิ่ม log เพื่อดู origin ที่ถูกบล็อก
       callback(new Error('Not allowed by CORS'));
     }
   },
