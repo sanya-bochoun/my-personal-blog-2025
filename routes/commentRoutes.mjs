@@ -13,8 +13,14 @@ const router = express.Router();
 
 // Validation middleware
 const commentValidation = [
-  body('content').trim().notEmpty().withMessage('Comment content cannot be empty'),
-  body('post_id').isInt().withMessage('Invalid post ID')
+  body('content')
+    .trim()
+    .notEmpty().withMessage('Comment content cannot be empty')
+    .isLength({ min: 2, max: 1000 }).withMessage('Comment must be between 2-1000 characters')
+    .matches(/^[ก-๙a-zA-Z0-9\s!@#$%^&*(),.?":{}|<>]+$/).withMessage('Comment contains invalid characters'),
+  body('post_id')
+    .isInt().withMessage('Invalid post ID')
+    .notEmpty().withMessage('Post ID is required')
 ];
 
 // Routes

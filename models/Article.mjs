@@ -19,9 +19,11 @@ export class Article {
         SELECT 
           a.id, a.title, a.content, a.excerpt as introduction, a.thumbnail_url, 
           a.published as status, a.category_id, a.author_id, a.created_at, a.updated_at, a.slug,
-          c.name as category_name
+          c.name as category_name,
+          u.username as author_name
         FROM posts a
         LEFT JOIN categories c ON a.category_id = c.id
+        LEFT JOIN users u ON a.author_id = u.id
       `;
 
       // สร้าง WHERE clause

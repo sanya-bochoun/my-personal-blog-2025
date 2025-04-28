@@ -8,6 +8,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import dotenv from 'dotenv';
+import http from 'http';
+import { Server as SocketIOServer } from 'socket.io';
 
 import { testConnection } from './utils/db.mjs';
 import routes from './routes/index.mjs';
@@ -28,48 +30,41 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ทดสอบการเชื่อมต่อกับฐานข้อมูล
+// Test database connection
 testConnection();
 
 // Security Middleware
-// 1. Helmet - ตั้งค่า HTTP headers เพื่อความปลอดภัย
+// 1. Helmet - Set HTTP headers for security
 app.use(helmet());
 
-// 2. Rate Limiting - ป้องกัน brute force และ DOS attacks
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 นาที
-  max: 100, // จำกัด 100 requests ต่อ IP ใน 15 นาที
-  standardHeaders: true,
-  message: 'Too many requests from this IP, please try again after 15 minutes'
-});
-app.use('/api', limiter);
+// 2. Rate Limiting - Prevent brute force and DOS attacks
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit 100 requests per IP in 15 minutes
+  message: 'Too many requests from this IP, please try again later.'
+}));
 
-// 3. Data Sanitization - ป้องกัน XSS attacks
+// 3. Data Sanitization - Prevent XSS attacks
 app.use(xss());
 
-// CORS
+// CORS configuration
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  process.env.FRONTEND_URL,
+  'https://your-production-domain.com'
+].filter(Boolean); // Filter out null/undefined values
+
 const corsOptions = {
-  origin: function(origin, callback) {
-    const allowedOrigins = [
-      'http://localhost:5173',  // Vite dev server
-      'http://localhost:3000',  // Alternative dev port
-      'http://127.0.0.1:5173',  // Vite dev server alternative
-      'http://127.0.0.1:3000',  // Alternative dev port
-      process.env.FRONTEND_URL  // Production URL
-    ].filter(Boolean); // กรองค่า null/undefined ออก
-    
-    // Allow requests with no origin (like mobile apps or curl requests)
+  origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.log('Blocked origin:', origin); // เพิ่ม log เพื่อดู origin ที่ถูกบล็อก
+      console.log('Blocked origin:', origin); // Log blocked origins
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range']
+  credentials: true
 };
 
 app.use(cors(corsOptions));
@@ -95,7 +90,7 @@ app.use('/api/likes', likeRoutes);
 
 // Test route
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'API is running...',
     timestamp: new Date(),
     environment: process.env.NODE_ENV
@@ -107,7 +102,7 @@ app.get('/api/health', async (req, res) => {
   try {
     // ทดสอบการเชื่อมต่อกับฐานข้อมูล
     const dbConnected = await testConnection();
-    
+
     res.json({
       status: 'ok',
       timestamp: new Date(),
@@ -126,17 +121,34 @@ app.get('/api/health', async (req, res) => {
 app.use(errorHandler);
 app.use(notFoundHandler);
 
+// สร้าง HTTP server จาก express app
+const server = http.createServer(app);
+
+// ตั้งค่า socket.io
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://127.0.0.1:5173',
+      'http://127.0.0.1:3000',
+      process.env.FRONTEND_URL
+    ].filter(Boolean),
+    credentials: true
+  }
+});
+
+// ตัวอย่าง event สำหรับ dev/debug
+io.on('connection', (socket) => {
+  console.log('A user connected:', socket.id);
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+  });
+});
+
 // เริ่มต้น server
-app.listen(PORT, () => {
-  console.log(`✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨
-🌈 🚀 Server is running successfully! 🚀 🌈
-🔹 Environment: ${process.env.NODE_ENV}
-🔹 Port: ${PORT}
-🔹 Status: Online and ready!
-🔹 URLs: http://localhost:${PORT}
-🔹 API: http://localhost:${PORT}/api
-🔹 Health Check: http://localhost:${PORT}/api/health
-🔹 Time: ${new Date().toLocaleString()}
-🌟 Happy coding! 💻 ✨
-✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨`);
-}); 
+server.listen(PORT, () => {
+  console.log(`✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨\n🌈 🚀 Server is running successfully! 🚀 🌈\n🔹 Environment: ${process.env.NODE_ENV}\n🔹 Port: ${PORT}\n🔹 Status: Online and ready!\n🔹 URLs: http://localhost:${PORT}\n🔹 API: http://localhost:${PORT}/api\n🔹 Health Check: http://localhost:${PORT}/api/health\n🔹 Time: ${new Date().toLocaleString()}\n🌟 Happy coding! 💻 ✨\n✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨`);
+});
+
+export { io }; 

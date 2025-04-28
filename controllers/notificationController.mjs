@@ -1,4 +1,5 @@
 import db from '../utils/db.mjs';
+import { io } from '../server.mjs';
 
 /**
  * ดึงรายการแจ้งเตือนและกิจกรรมล่าสุด
@@ -151,8 +152,17 @@ export const createNotification = async (userId, type, message, link = null, dat
        RETURNING *`,
       [userId, type, message, link, JSON.stringify(data)]
     );
-    
-    return result.rows[0];
+    // ดึงข้อมูล user สำหรับแจ้งเตือน
+    const notification = result.rows[0];
+    const userResult = await db.query('SELECT full_name as user_name, avatar_url as user_avatar FROM users WHERE id = $1', [data.user_id || userId]);
+    const user = userResult.rows[0] || {};
+    // emit event ไปยัง client ทุกคน (หรือจะ filter ตาม userId ก็ได้)
+    io.emit('notification', {
+      ...notification,
+      user_name: user.user_name,
+      user_avatar: user.user_avatar
+    });
+    return notification;
   } catch (error) {
     console.error('Create notification error:', error);
     throw error;

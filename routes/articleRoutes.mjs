@@ -277,7 +277,7 @@ router.get('/detail/:slug', async (req, res) => {
   try {
     const { slug } = req.params;
     
-    // ดึงข้อมูลบทความพร้อมจำนวนไลค์
+    // Get article data with like and comment counts
     const result = await query(`
       SELECT 
         p.*,
@@ -285,11 +285,13 @@ router.get('/detail/:slug', async (req, res) => {
         u.username as "Author.username",
         u.avatar_url as "Author.avatar_url",
         u.bio as "Author.bio",
-        COUNT(pl.post_id) as like_count
+        COUNT(DISTINCT pl.post_id) as like_count,
+        COUNT(DISTINCT cm.id) as comment_count
       FROM posts p
       LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN users u ON p.author_id = u.id
       LEFT JOIN post_likes pl ON p.id = pl.post_id
+      LEFT JOIN comments cm ON p.id = cm.post_id
       WHERE p.slug = $1
       GROUP BY p.id, c.name, u.username, u.avatar_url, u.bio
     `, [slug]);
@@ -297,7 +299,7 @@ router.get('/detail/:slug', async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({
         status: 'error',
-        message: 'ไม่พบบทความที่ต้องการ'
+        message: 'Article not found'
       });
     }
 
@@ -309,7 +311,7 @@ router.get('/detail/:slug', async (req, res) => {
     console.error('Error fetching article:', error);
     res.status(500).json({
       status: 'error',
-      message: 'เกิดข้อผิดพลาดในการโหลดบทความ'
+      message: 'Error loading article'
     });
   }
 });
