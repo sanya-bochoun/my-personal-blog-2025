@@ -15,7 +15,6 @@ import ResetPassword from './pages/ResetPassword'
 import ResetPasswordByToken from './pages/ResetPasswordByToken'
 import ForgotPassword from './pages/ForgotPassword'
 import BackToTopButton from './components/BackToTopButton'
-import { Toaster } from 'sonner'
 import { useAuth } from './context/AuthContext'
 import ArticleManagement from './pages/ArticleManagement'
 import AdminLayout from './pages/admin/AdminLayout'
@@ -126,7 +125,6 @@ function App() {
           <Route path="/about" element={<MainLayout><AboutMe /></MainLayout>} />
           <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />
         </Routes>
-        <Toaster position="top-right" />
       </div>
     </Router>
   );

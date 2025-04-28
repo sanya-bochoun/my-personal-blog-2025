@@ -41,7 +41,7 @@ function HeroSection({
             </article>
 
             {/* Center Section - Image */}
-            <figure className={cn("hero-image-wrapper", "flex items-center justify-center w-full md:w-1/3 mt-4 md:mt-[60px]")}>
+            <figure className={cn("hero-image-wrapper", "flex items-center justify-center w-full md:w-1/3 mt-0 md:mt-[60px]")}>
               <div className={cn("hero-image-container", "relative bg-[#FFFFFF] rounded-2xl overflow-hidden w-[343px] h-[470px] md:w-[386px] md:h-[529px]")}>
                 <img
                   src={heroImage}

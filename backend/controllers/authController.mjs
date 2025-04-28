@@ -109,12 +109,14 @@ const register = async (req, res) => {
  */
 const login = async (req, res) => {
   try {
+    console.log('[LOGIN] Request body:', req.body);
     const { email, username, password } = req.body;
 
     let query, params;
     
     // ตรวจสอบว่าใช้ email หรือ username ในการล็อกอิน
     if (email) {
+      console.log('[LOGIN] Using email:', email);
       query = `
         SELECT 
           id, username, email, password, role, full_name, is_locked,
@@ -127,6 +129,7 @@ const login = async (req, res) => {
       `;
       params = [email];
     } else if (username) {
+      console.log('[LOGIN] Using username:', username);
       query = `
         SELECT 
           id, username, email, password, role, full_name, is_locked,
@@ -139,6 +142,7 @@ const login = async (req, res) => {
       `;
       params = [username];
     } else {
+      console.log('[LOGIN] Missing email/username');
       return res.status(400).json({
         status: 'error',
         message: 'กรุณาระบุอีเมลหรือชื่อผู้ใช้'
@@ -146,9 +150,12 @@ const login = async (req, res) => {
     }
 
     // ค้นหาผู้ใช้
+    console.log('[LOGIN] Querying user...');
     const result = await db.query(query, params);
+    console.log('[LOGIN] Query result:', result.rows);
 
     if (result.rows.length === 0) {
+      console.log('[LOGIN] User not found');
       return res.status(401).json({
         status: 'error',
         message: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'
@@ -156,9 +163,11 @@ const login = async (req, res) => {
     }
 
     const user = result.rows[0];
+    console.log('[LOGIN] User found:', user);
 
     // ตรวจสอบว่าบัญชีถูกล็อคหรือไม่
     if (user.is_locked) {
+      console.log('[LOGIN] Account is locked');
       return res.status(403).json({
         status: 'error',
         message: 'บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ'
@@ -166,9 +175,12 @@ const login = async (req, res) => {
     }
 
     // ตรวจสอบรหัสผ่าน
+    console.log('[LOGIN] Checking password...');
     const passwordMatch = await bcrypt.compare(password, user.password);
+    console.log('[LOGIN] Password match:', passwordMatch);
     
     if (!passwordMatch) {
+      console.log('[LOGIN] Password incorrect');
       return res.status(401).json({
         status: 'error',
         message: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'
@@ -176,6 +188,7 @@ const login = async (req, res) => {
     }
 
     // สร้าง JWT token
+    console.log('[LOGIN] Generating access token...');
     const accessToken = jwt.sign(
       { userId: user.id },
       process.env.JWT_SECRET,
@@ -183,6 +196,7 @@ const login = async (req, res) => {
     );
 
     // สร้าง refresh token
+    console.log('[LOGIN] Generating refresh token...');
     const refreshToken = jwt.sign(
       { userId: user.id },
       process.env.JWT_SECRET,
@@ -192,7 +206,7 @@ const login = async (req, res) => {
     // บันทึก refresh token ลงฐานข้อมูล
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
-    
+    console.log('[LOGIN] Saving refresh token to DB...');
     await db.query(
       `INSERT INTO refresh_tokens (user_id, token, expires_at)
        VALUES ($1, $2, $3)`,
@@ -200,12 +214,14 @@ const login = async (req, res) => {
     );
 
     // บันทึกข้อมูลการเข้าสู่ระบบ
+    console.log('[LOGIN] Logging user session...');
     await db.query(
       `INSERT INTO user_sessions (user_id, ip_address, user_agent)
        VALUES ($1, $2, $3)`,
       [user.id, req.ip, req.headers['user-agent'] || '']
     );
 
+    console.log('[LOGIN] Login successful!');
     res.json({
       status: 'success',
       message: 'เข้าสู่ระบบสำเร็จ',
@@ -223,7 +239,7 @@ const login = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Login error:', error.message);
+    console.error('[LOGIN] Login error:', error);
     res.status(500).json({
       status: 'error',
       message: 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ'

@@ -58,14 +58,14 @@ function Navbar() {
         `}>
           {/* Logo Section */}
           {/* logo-wrapper -> 'flex items-center' */}
-          <Link to="/" className={STYLES.components.navbar.logo.wrapper}>
+          <div onClick={() => navigate('/')} className={STYLES.components.navbar.logo.wrapper + ' cursor-pointer'}>
             {/* logo-image -> 'w-[24px] h-[24px] sm:w-[44px] sm:h-[44px]' */}
             <img 
               src={logo} 
               alt="logo" 
               className={STYLES.components.navbar.logo.image}
             />
-          </Link>
+          </div>
           
           {/* Mobile Menu Button */}
           {/* mobile-menu -> 'block sm:hidden focus:outline-none' */}
@@ -98,7 +98,7 @@ function Navbar() {
                 <div className="relative" ref={dropdownRef}>
                   <button 
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="flex items-center gap-2 focus:outline-none"
+                    className="flex items-center gap-2 focus:outline-none cursor-pointer"
                   >
                     <div className="w-10 h-10 overflow-hidden rounded-full bg-gray-200">
                       <img 

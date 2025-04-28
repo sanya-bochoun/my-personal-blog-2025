@@ -184,7 +184,12 @@ function ArticleManagement() {
     <div className="flex flex-col min-h-screen justify-center sm:justify-start max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8  sm:mt-20 mb-0 text-left">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        {/* Mobile: My Articles ด้านบน, Back ด้านล่าง */}
+        <div className="block sm:hidden w-full mb-2">
+          <h1 className="text-2xl font-semibold text-gray-900 mb-2 mt-10 text-center">My Articles</h1>
+        </div>
+        {/* Desktop: กลุ่มปุ่ม Back, My Articles, View All Articles ชิดซ้าย */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full sm:w-auto sm:justify-start">
           <button
             onClick={handleBackClick}
             disabled={isNavigatingBack}
@@ -199,7 +204,7 @@ function ArticleManagement() {
               'Back'
             )}
           </button>
-          <h1 className="text-2xl sm:text-2xl font-semibold text-gray-900">My Articles</h1>
+          <h1 className="hidden sm:block text-2xl sm:text-2xl font-semibold text-gray-900">My Articles</h1>
           {user?.role === 'admin' && (
             <button
               onClick={handleViewAllToggle}
@@ -209,12 +214,15 @@ function ArticleManagement() {
             </button>
           )}
         </div>
-        <Link
-          to="/create-article"
-          className="w-full sm:w-auto px-4 sm:px-[40px] py-[12px] sm:py-[12px] text-sm font-medium text-white bg-gray-900 rounded-[999px] hover:bg-gray-800 flex items-center gap-2 justify-center sm:justify-start"
-        >
-          <span>+</span> Create article
-        </Link>
+        {/* ปุ่ม Create article อยู่ขวาสุดใน desktop */}
+        <div className="w-full sm:w-auto flex justify-end">
+          <Link
+            to="/create-article"
+            className="w-full sm:w-auto px-4 sm:px-[40px] py-[12px] sm:py-[12px] text-sm font-medium text-white bg-gray-900 rounded-[999px] hover:bg-gray-800 flex items-center gap-2 justify-center sm:justify-start"
+          >
+            <span>+</span> Create article
+          </Link>
+        </div>
       </div>
 
       {/* Search and Filters */}

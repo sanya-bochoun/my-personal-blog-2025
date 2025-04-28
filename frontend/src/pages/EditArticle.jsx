@@ -45,7 +45,7 @@ function EditArticle() {
             category: article.category_id?.toString() || '',
             introduction: article.introduction || '',
             authorName: user?.username || '',
-            thumbnailPreview: article.thumbnail_image ? `${API_URL}${article.thumbnail_image}` : null,
+            thumbnailPreview: article.thumbnail_url || null,
             thumbnailFile: null
           });
         } else {
@@ -100,40 +100,58 @@ function EditArticle() {
     setIsSaving(true);
     try {
       const token = localStorage.getItem('accessToken');
-      
-      // ตรวจสอบข้อมูลที่จำเป็น
       if (!formData.title || !formData.category) {
         toast.error('Title and category are required');
         return;
       }
 
-      const submitData = {
-        title: formData.title,
-        content: formData.content,
-        categoryId: formData.category,
-        introduction: formData.introduction,
-        status: 'draft'
-      };
+      let response;
+      if (formData.thumbnailFile) {
+        // อัปโหลดไฟล์ใหม่
+        const form = new FormData();
+        form.append('title', formData.title);
+        form.append('content', formData.content);
+        form.append('categoryId', formData.category);
+        form.append('introduction', formData.introduction);
+        form.append('status', 'draft');
+        form.append('thumbnailImage', formData.thumbnailFile);
 
-      console.log('Sending data:', submitData);
-
-      const response = await api.put(
-        `${API_URL}/api/articles/${id}`,
-        submitData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
+        response = await api.put(
+          `${API_URL}/api/articles/${id}`,
+          form,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+              // ไม่ต้องใส่ Content-Type, browser จะจัดการเอง
+            }
           }
-        }
-      );
+        );
+      } else {
+        // ไม่อัปโหลดไฟล์ใหม่
+        const submitData = {
+          title: formData.title,
+          content: formData.content,
+          categoryId: formData.category,
+          introduction: formData.introduction,
+          status: 'draft'
+        };
+        response = await api.put(
+          `${API_URL}/api/articles/${id}`,
+          submitData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      }
 
       if (response.data.status === 'success') {
         toast.success('Article saved as draft');
         navigate('/article-management');
       }
     } catch (error) {
-      console.error('Error details:', error.response?.data);
       toast.error(error.response?.data?.message || 'Failed to save article');
     } finally {
       setIsSaving(false);
@@ -144,40 +162,57 @@ function EditArticle() {
     setIsPublishing(true);
     try {
       const token = localStorage.getItem('accessToken');
-      
-      // ตรวจสอบข้อมูลที่จำเป็น
       if (!formData.title || !formData.category) {
         toast.error('Title and category are required');
         return;
       }
 
-      const submitData = {
-        title: formData.title,
-        content: formData.content,
-        categoryId: formData.category,
-        introduction: formData.introduction,
-        status: 'published'
-      };
+      let response;
+      if (formData.thumbnailFile) {
+        // อัปโหลดไฟล์ใหม่
+        const form = new FormData();
+        form.append('title', formData.title);
+        form.append('content', formData.content);
+        form.append('categoryId', formData.category);
+        form.append('introduction', formData.introduction);
+        form.append('status', 'published');
+        form.append('thumbnailImage', formData.thumbnailFile);
 
-      console.log('Sending data:', submitData);
-
-      const response = await api.put(
-        `${API_URL}/api/articles/${id}`,
-        submitData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
+        response = await api.put(
+          `${API_URL}/api/articles/${id}`,
+          form,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
           }
-        }
-      );
+        );
+      } else {
+        // ไม่อัปโหลดไฟล์ใหม่
+        const submitData = {
+          title: formData.title,
+          content: formData.content,
+          categoryId: formData.category,
+          introduction: formData.introduction,
+          status: 'published'
+        };
+        response = await api.put(
+          `${API_URL}/api/articles/${id}`,
+          submitData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      }
 
       if (response.data.status === 'success') {
         toast.success('Article published successfully');
         navigate('/article-management');
       }
     } catch (error) {
-      console.error('Error details:', error.response?.data);
       toast.error(error.response?.data?.message || 'Failed to publish article');
     } finally {
       setIsPublishing(false);

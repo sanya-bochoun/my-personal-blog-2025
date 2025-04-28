@@ -220,46 +220,51 @@ function CreateArticle() {
       {/* Header */}
       <div className="border-b border-gray-200 bg-[#F9F8F6]">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-4 order-1">
+          <div className="flex flex-col items-center text-center gap-4 sm:flex-row sm:items-center sm:justify-between sm:text-left">
+            {/* Mobile: หัวข้ออยู่บนปุ่ม Back */}
+            <div className="flex flex-col gap-2 w-full sm:flex-row sm:items-center sm:gap-4 sm:w-auto order-1">
+              <h1 className="block sm:hidden text-2xl font-medium text-[#26231E] text-center mt-8 mb-2">Create article</h1>
               <button
                 onClick={() => navigate('/article-management')}
                 className="w-full sm:w-auto px-[40px] py-[12px] text-sm font-medium text-[#26231E] bg-white border border-gray-300 rounded-[999px] hover:bg-gray-50 sm:cursor-pointer sm:px-[40px]py-[12px]"
-              >                
+              >
                 Back
               </button>
-              <h1 className="text-2xl font-medium text-[#26231E] text-center sm:text-left">Create article</h1>
+              {/* Desktop: หัวข้ออยู่ข้างปุ่ม Back */}
+              <h1 className="hidden sm:block text-2xl font-medium text-[#26231E] text-left ml-4">Create article</h1>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto order-2">
-              <button
-                onClick={handleSaveAsDraft}
-                disabled={isSaving || isPublishing}
-                className="w-full sm:w-auto px-[40px] py-[12px] text-sm font-medium text-[#26231E] bg-white border border-gray-300 rounded-[999px] hover:bg-gray-50 sm:cursor-pointer sm:px-[40px]py-[12px]"
-              >
-                {isSaving ? (
-                  <span>Saving...</span>
-                ) : (
-                  'Save as draft'
-                )}
-              </button>
-              <button
-                onClick={handlePublish}
-                disabled={isSaving || isPublishing}
-                className="w-full sm:w-auto px-[40px] py-[12px] text-sm font-medium text-white bg-[#26231E] rounded-[999px] hover:bg-gray-800 sm:cursor-pointer"
-              >
-                {isPublishing ? (
-                  <span>Publishing...</span>
-                ) : (
-                  'Save and publish'
-                )}
-              </button>
+            <div className="flex flex-col gap-2 w-full sm:flex-row sm:w-auto order-2">
+              <div className="flex flex-col gap-2 w-full sm:flex-row sm:gap-2 sm:w-auto">
+                <button
+                  onClick={handleSaveAsDraft}
+                  disabled={isSaving || isPublishing}
+                  className="w-full sm:w-auto px-[40px] py-[12px] text-sm font-medium text-[#26231E] bg-white border border-gray-300 rounded-[999px] hover:bg-gray-50 sm:cursor-pointer sm:px-[40px]py-[12px] mb-2 sm:mb-0"
+                >
+                  {isSaving ? (
+                    <span>Saving...</span>
+                  ) : (
+                    'Save as draft'
+                  )}
+                </button>
+                <button
+                  onClick={handlePublish}
+                  disabled={isSaving || isPublishing}
+                  className="w-full sm:w-auto px-[40px] py-[12px] text-sm font-medium text-white bg-[#26231E] rounded-[999px] hover:bg-gray-800 sm:cursor-pointer sm:px-[40px]py-[12px]"
+                >
+                  {isPublishing ? (
+                    <span>Publishing...</span>
+                  ) : (
+                    'Save and publish'
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-12">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-2 sm:mt-16">
         {/* Thumbnail Image */}
         <div>
           <label className="block text-base font-medium text-[#75716B] mb-3 sm:text-left">

@@ -23,7 +23,6 @@ function EditArticle() {
     authorName: ''
   });
 
-  // ดึงข้อมูลบทความที่ต้องการแก้ไข
   useEffect(() => {
     const fetchArticle = async () => {
       try {
@@ -40,19 +39,26 @@ function EditArticle() {
           }
         });
 
-        const article = response.data.data;
+        const article = Array.isArray(response.data.data)
+          ? response.data.data[0]
+          : response.data.data;
+        if (!article) {
+          toast.error('ไม่พบข้อมูลบทความ');
+          navigate('/admin/article-management');
+          return;
+        }
         setFormData({
           title: article.title,
           introduction: article.introduction || '',
           content: article.content || '',
-          categoryId: article.category_id.toString(),
-          thumbnailPreview: article.thumbnail_image ? `http://localhost:5000${article.thumbnail_image}` : null,
+          categoryId: article.category_id?.toString() || '',
+          thumbnailPreview: article.thumbnail_url || null,
           authorName: user?.name || user?.username || ''
         });
       } catch (error) {
         console.error('Error fetching article:', error);
         toast.error('ไม่สามารถดึงข้อมูลบทความได้');
-        navigate('/admin/articles');
+        navigate('/admin/article-management');
       }
     };
 
@@ -114,6 +120,7 @@ function EditArticle() {
   };
 
   const handleSaveAsDraft = async () => {
+    console.log('Save as draft clicked');
     try {
       if (!formData.title.trim() || !formData.categoryId) {
         toast.error('กรุณากรอกชื่อบทความและเลือกหมวดหมู่');
@@ -138,6 +145,7 @@ function EditArticle() {
         form.append('thumbnail_image', formData.thumbnailImage);
       }
 
+      console.log('Sending draft data:', Object.fromEntries(form.entries()));
       const response = await axios.put(`http://localhost:5000/api/admin/articles/${id}`, form, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -164,6 +172,7 @@ function EditArticle() {
   };
 
   const handlePublish = async () => {
+    console.log('Publish clicked');
     try {
       if (!formData.title.trim() || !formData.categoryId || !formData.introduction?.trim() || !formData.content?.trim()) {
         toast.error('กรุณากรอกข้อมูลให้ครบถ้วน');
@@ -188,6 +197,7 @@ function EditArticle() {
         form.append('thumbnail_image', formData.thumbnailImage);
       }
 
+      console.log('Sending publish data:', Object.fromEntries(form.entries()));
       const response = await axios.put(`http://localhost:5000/api/admin/articles/${id}`, form, {
         headers: {
           'Authorization': `Bearer ${token}`
