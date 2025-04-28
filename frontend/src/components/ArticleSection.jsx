@@ -385,7 +385,8 @@ const ArticleSection = () => {
                   "text-sm font-medium text-gray-600 hover:text-gray-800",
                   "transition-all duration-200 ease-in-out",
                   "flex items-center justify-center mx-auto gap-2",
-                  "hover:shadow-sm"
+                  "hover:shadow-sm",
+                  "cursor-pointer"
                 )}
               >
                 View more

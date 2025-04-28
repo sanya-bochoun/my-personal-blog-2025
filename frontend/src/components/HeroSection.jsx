@@ -1,16 +1,15 @@
 import React from "react";
-import defaultHeroImage from "../assets/16_9 img.png";
+import defaultHeroImage from "../assets/hero-sec.jpg";
 import { STYLES } from "../constants/styles";
 import { cn } from "@/lib/utils";
 
 function HeroSection({
   heroImage = defaultHeroImage,
-  title = "Stay Informed, Stay Inspired",
-  subtitle = "Discover a World of Knowledge at Your Fingertips. Your Daily Dose of Inspiration and Information.",
+  subtitle = "Unlock Endless Insights at Your Fingertips—Your Daily Spark of Inspiration and Knowledge.",
   authorLabel = "-Author",
-  authorName = "Thompson P.",
-  authorBio = "I am a pet enthusiast and freelance writer who specializes in animal behavior and care. With a deep love for cats, I enjoy sharing insights on feline companionship and wellness.",
-  authorExtraBio = "When I'm not writing, I spend time volunteering at my local animal shelter, helping cats find loving homes.",
+  authorName = "Sanya B.",
+  authorBio = "I'm a full-stack app developer and avid football fan with a soft spot for dogs and cats. Whether I'm coding the next great mobile experience, exploring new travel destinations, or tinkering with cutting-edge technology, I bring the same passion and curiosity to everything I do",
+  authorExtraBio = "As an app developer and football aficionado, I fuse creativity with logic in every project. Off the clock, I'm hiking new trails with my dog, curled up reading about cat behavior, or testing out the newest gadgets.",
 }) {
   return (
     <section className={cn("hero-section", STYLES.layout.wrapper)}>
@@ -22,11 +21,12 @@ function HeroSection({
             <article className={cn("hero-text-section", STYLES.layout.flex, "w-full md:w-1/3 mt-[80px] md:mt-[60px]")}>
               <div className={cn("hero-text-card", STYLES.components.card.base, STYLES.components.card.padding, "text-right w-full")}>
                 <div className="title-container h-[96px] md:h-auto">
-                  <h1 className={cn("hero-title", STYLES.typography.heading.base, STYLES.typography.heading.size, "text-center md:text-right")}>
-                    {title}
+                  <h1 className={cn("hero-title", STYLES.typography.heading.base, STYLES.typography.heading.size, "text-center md:text-right")}> 
+                    <span className="block font-bold text-[56px] md:text-[65px]">Stay</span>
+                    <span className="block mt-6 mb-0">Curious, Stay<br/>Motivated</span>
                   </h1>
                 </div>
-                <p className={cn("hero-subtitle", STYLES.typography.body.base, STYLES.typography.body.size, "mt-4 text-center md:text-right")}>
+                <p className={cn("hero-subtitle", STYLES.typography.body.base, STYLES.typography.body.size, "mt-2 text-center md:text-right")}>
                   {subtitle}
                 </p>
               </div>
