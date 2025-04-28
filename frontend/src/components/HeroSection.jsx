@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 
 function HeroSection({
   heroImage = defaultHeroImage,
-  subtitle = "Unlock Endless Insights at Your Fingertips—Your Daily Spark of Inspiration and Knowledge.",
   authorLabel = "-Author",
   authorName = "Sanya B.",
   authorBio = "I'm a full-stack app developer and avid football fan with a soft spot for dogs and cats. Whether I'm coding the next great mobile experience, exploring new travel destinations, or tinkering with cutting-edge technology, I bring the same passion and curiosity to everything I do",
@@ -18,16 +17,25 @@ function HeroSection({
           <div className={cn("hero-content-wrapper", "flex flex-col md:flex-row items-center justify-between w-full gap-[16px] md:gap-[48px] md:mt-[100px]")}>
             
             {/* Left Section - Text */}
-            <article className={cn("hero-text-section", STYLES.layout.flex, "w-full md:w-1/3 mt-[80px] md:mt-[60px]")}>
+            <article className={cn("hero-text-section", STYLES.layout.flex, "w-full md:w-1/3 mt-[52px] md:mt-[60px]")}>
               <div className={cn("hero-text-card", STYLES.components.card.base, STYLES.components.card.padding, "text-right w-full")}>
                 <div className="title-container h-[96px] md:h-auto">
                   <h1 className={cn("hero-title", STYLES.typography.heading.base, STYLES.typography.heading.size, "text-center md:text-right")}> 
-                    <span className="block font-bold text-[56px] md:text-[65px]">Stay</span>
-                    <span className="block mt-6 mb-0">Curious, Stay<br/>Motivated</span>
+                    <span className="block font-bold text-[44px] sm:text-[56px] md:text-[65px] leading-tight mb-4 text-left md:text-right">Stay</span>
+                    <span className="block font-semibold text-[22px] sm:text-[32px] md:text-[40px] leading-tight mb-6 text-left md:text-right">Curious,<br/> Stay Motivated</span>
                   </h1>
                 </div>
-                <p className={cn("hero-subtitle", STYLES.typography.body.base, STYLES.typography.body.size, "mt-2 text-center md:text-right")}>
-                  {subtitle}
+                {/* Mobile subtitle (ขึ้นบรรทัดใหม่ตามที่ต้องการ) */}
+                <p className={cn("hero-subtitle mt-10 sm:hidden md:text-right text-gray-500 text-[15px] text-left pl-0")}> 
+                  Unlock Endless Insights<br/>
+                  at Your Fingertips—Your Daily<br/>
+                  Spark of Inspiration and Knowledge
+                </p>
+                {/* Desktop/Tablet subtitle (เดิม) */}
+                <p className={cn("hero-subtitle hidden sm:block mt-6 md:text-right px-2 text-gray-500 text-[17px] text-left")}> 
+                  Unlock Endless Insights <br/>
+                  at Your Fingertips—Your Daily <br/>
+                  Spark of Inspiration and Knowledge.
                 </p>
               </div>
             </article>
