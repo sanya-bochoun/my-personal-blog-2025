@@ -80,11 +80,11 @@ function CategoryManagement() {
           Authorization: `Bearer ${token}`
         }
       });
-      toast.success('Category deleted successfully');
+      toast.success('ลบหมวดหมู่สำเร็จ');
       fetchCategories();
     } catch (error) {
-      console.error('Error deleting category:', error);
-      toast.error(error.response?.data?.error || 'Failed to delete category');
+      const errorMsg = error.response?.data?.error || 'ไม่สามารถลบหมวดหมู่ได้';
+      toast.error(errorMsg);
     } finally {
       setShowDeleteModal(false);
       setSelectedCategoryId(null);
@@ -195,7 +195,7 @@ function CategoryManagement() {
               </button>
               <button
                 onClick={handleConfirmDelete}
-                className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-[999px] hover:bg-gray-800"
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-[999px] hover:bg-red-700"
               >
                 Delete
               </button>

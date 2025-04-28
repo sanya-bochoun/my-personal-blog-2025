@@ -77,7 +77,7 @@ export class Category {
     try {
       // ตรวจสอบว่ามีบทความในหมวดหมู่นี้หรือไม่
       const checkArticles = await query(
-        'SELECT COUNT(*) FROM articles WHERE category_id = $1',
+        'SELECT COUNT(*) FROM posts WHERE category_id = $1',
         [id]
       );
       

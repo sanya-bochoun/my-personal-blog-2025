@@ -29,7 +29,7 @@ function Navbar() {
 
   const handleLogout = async () => {
     await logout();
-    toast.success('ออกจากระบบสำเร็จ');
+    toast.success('Logged out successfully');
     navigate('/');
     setIsMenuOpen(false);
     setIsDropdownOpen(false);

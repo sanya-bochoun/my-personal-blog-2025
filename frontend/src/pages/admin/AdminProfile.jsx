@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 
 function AdminProfile() {
@@ -131,7 +131,7 @@ function AdminProfile() {
         profilePicturePreview: updatedUserData.avatar_url || null
       });
 
-      toast.success('Profile updated successfully');
+      toast.success('บันทึกโปรไฟล์สำเร็จ');
     } catch (error) {
       console.error('Error updating profile:', error);
       const errorMessage = error.response?.data?.message || 'Failed to update profile';
@@ -159,7 +159,7 @@ function AdminProfile() {
         <button
           onClick={handleSubmit}
           disabled={saving}
-          className="px-[40px] py-[12px] text-sm font-medium text-white bg-gray-900 rounded-full hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="cursor-pointer px-[40px] py-[12px] text-sm font-medium text-white bg-gray-900 rounded-full hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {saving ? 'Saving...' : 'Save'}
         </button>

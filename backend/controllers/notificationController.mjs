@@ -16,10 +16,15 @@ export const getNotifications = async (req, res) => {
         n.link,
         n.data,
         n.created_at,
-        u.full_name as user_name,
-        u.avatar_url as user_avatar
+        COALESCE(u.full_name, u2.full_name) as user_name,
+        COALESCE(u.avatar_url, u2.avatar_url) as user_avatar,
+        a.full_name as author_name,
+        a.avatar_url as author_avatar
        FROM notifications n
        LEFT JOIN users u ON u.id = (n.data->>'user_id')::integer
+       LEFT JOIN users u2 ON u2.id = n.user_id
+       LEFT JOIN posts p ON p.id = (n.data->>'post_id')::integer
+       LEFT JOIN users a ON a.id = p.author_id
        WHERE n.user_id = $1
        ORDER BY n.created_at DESC
        LIMIT 50`,
