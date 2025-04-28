@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { FiLoader, FiUpload } from 'react-icons/fi';
 import { IoChevronDownOutline, IoArrowBack } from 'react-icons/io5';
@@ -31,7 +31,7 @@ function EditArticle() {
     const fetchArticle = async () => {
       try {
         const token = localStorage.getItem('accessToken');
-        const response = await axios.get(`${API_URL}/api/articles/${id}`, {
+        const response = await api.get(`${API_URL}/api/articles/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -63,7 +63,7 @@ function EditArticle() {
 
     const fetchCategories = async () => {
       try {
-        const response = await axios.get(`${API_URL}/api/categories`);
+        const response = await api.get(`${API_URL}/api/categories`);
         if (response.data.status === 'success') {
           setCategories(response.data.data);
         }
@@ -117,7 +117,7 @@ function EditArticle() {
 
       console.log('Sending data:', submitData);
 
-      const response = await axios.put(
+      const response = await api.put(
         `${API_URL}/api/articles/${id}`,
         submitData,
         {
@@ -161,7 +161,7 @@ function EditArticle() {
 
       console.log('Sending data:', submitData);
 
-      const response = await axios.put(
+      const response = await api.put(
         `${API_URL}/api/articles/${id}`,
         submitData,
         {
@@ -345,14 +345,14 @@ function EditArticle() {
           {/* Introduction */}
           <div>
             <label className="block text-base font-medium text-[#75716B] mb-3 text-left">
-              Introduction (max 120 letters)
+              Introduction (max 350 letters)
             </label>
             <div className="bg-[#F9F8F6] -ml-0 sm:-ml-4">
               <textarea
                 name="introduction"
                 value={formData.introduction}
                 onChange={handleInputChange}
-                maxLength={120}
+                maxLength={350}
                 rows={3}
                 placeholder="Write a brief introduction"
                 className="bg-white w-full sm:w-[960px] min-h-[143px] px-4 py-2.5 sm:ml-[10px] text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200 resize-y"

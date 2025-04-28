@@ -77,7 +77,7 @@ function BlogCard({
         <div className={cn("blog-author", "flex items-center gap-2 mt-2")}> 
           <img 
             className="w-6 h-6 rounded-full object-cover" 
-            src={authorImage || '/default-avatar.png'} 
+            src={authorImage && authorImage.trim() !== '' ? authorImage : '/src/assets/default-logo.png'} 
             alt={author} 
           />
           <span className="text-sm font-medium">{author}</span>

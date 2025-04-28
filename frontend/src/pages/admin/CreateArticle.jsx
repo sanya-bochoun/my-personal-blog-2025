@@ -208,7 +208,7 @@ function AdminCreateArticle() {
               <button
                 onClick={handleSaveAsDraft}
                 disabled={isLoading}
-                className={`px-[40px] py-[12px] text-sm font-medium text-[#26231E] bg-white border border-gray-300 rounded-full hover:bg-gray-50 flex items-center ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`px-[40px] py-[12px] text-sm font-medium text-[#26231E] bg-white border border-gray-300 rounded-full hover:bg-gray-50 flex items-center ${isLoading ? 'opacity-50 cursor-not-allowed' : ''} cursor-pointer`}
               >
                 {isLoading ? <FiLoader className="animate-spin mr-2" /> : null}
                 Save as draft
@@ -216,7 +216,7 @@ function AdminCreateArticle() {
               <button
                 onClick={handlePublish}
                 disabled={isLoading}
-                className={`px-[40px] py-[12px] text-sm font-medium text-white bg-[#26231E] rounded-full hover:bg-gray-800 flex items-center ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`px-[40px] py-[12px] text-sm font-medium text-white bg-[#26231E] rounded-full hover:bg-gray-800 flex items-center ${isLoading ? 'opacity-50 cursor-not-allowed ' : ''} cursor-pointer`}
               >
                 {isLoading ? <FiLoader className="animate-spin mr-2" /> : null}
                 Save and publish
@@ -332,14 +332,14 @@ function AdminCreateArticle() {
           {/* Introduction */}
           <div>
             <label className="block text-base font-medium text-[#75716B] mb-3 text-left">
-              Introduction (max 120 letters)
+              Introduction (max 350 letters)
             </label>
             <div className="bg-[#F9F8F6] -ml-4">
               <textarea
                 name="introduction"
                 value={formData.introduction}
                 onChange={handleInputChange}
-                maxLength={120}
+                maxLength={350}
                 rows={3}
                 placeholder="Write a brief introduction"
                 className="bg-white ml-[10px] w-[960px] min-h-[143px] px-4 py-2.5 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-200 resize-y"

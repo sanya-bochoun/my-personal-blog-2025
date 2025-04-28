@@ -5,8 +5,10 @@ import { FaRegNewspaper } from 'react-icons/fa';
 import { FiTrash2, FiLoader } from 'react-icons/fi';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { io } from 'socket.io-client';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const SOCKET_URL = API_URL.replace('/api', '');
 
 const NotificationBell = () => {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -92,6 +94,22 @@ const NotificationBell = () => {
       fetchActivities();
     }
   }, [showDropdown]);
+
+  useEffect(() => {
+    const socket = io(SOCKET_URL, {
+      withCredentials: true
+    });
+    socket.on('connect', () => {
+      // console.log('Socket connected:', socket.id);
+    });
+    socket.on('notification', (newNotification) => {
+      setActivities(prev => [newNotification, ...prev]);
+      toast.info('คุณมีแจ้งเตือนใหม่!');
+    });
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
 
   const getActivityIcon = (type) => {
     switch (type) {

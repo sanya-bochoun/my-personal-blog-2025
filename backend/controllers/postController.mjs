@@ -35,6 +35,8 @@ export const getPosts = async ({ page = 1, limit = 10, category, author, tag, se
       queryText += ` AND p.published = $${valueIndex}`;
       values.push(published);
       valueIndex++;
+    } else {
+      queryText += ` AND p.published = true`;
     }
 
     if (search) {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FiLoader, FiTrash2 } from 'react-icons/fi';
-import axios from 'axios';
+import api from '../../services/api';
 import { toast } from 'react-toastify';
 
 function Notification() {
@@ -16,7 +16,7 @@ function Notification() {
       setError(null);
       const token = localStorage.getItem('accessToken');
       
-      const response = await axios.get('http://localhost:5000/api/notifications', {
+      const response = await api.get('/api/notifications', {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -41,7 +41,7 @@ function Notification() {
       setClearing(true);
       const token = localStorage.getItem('accessToken');
       
-      await axios.put('http://localhost:5000/api/notifications/read-all', {}, {
+      await api.put('/api/notifications/read-all', {}, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -60,7 +60,7 @@ function Notification() {
   const deleteNotification = async (notificationId) => {
     try {
       const token = localStorage.getItem('accessToken');
-      await axios.delete(`http://localhost:5000/api/notifications/${notificationId}`, {
+      await api.delete(`/api/notifications/${notificationId}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -159,7 +159,7 @@ function Notification() {
                   <div className="flex items-center space-x-2">
                     {activity.target_id && (
                       <Link
-                        to={`/posts/${activity.target_id}`}
+                        to={`/article/${activity.target_id}`}
                         className="text-sm font-medium text-gray-900 hover:underline"
                       >
                         View

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { FiEdit2, FiTrash2, FiLoader, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
@@ -32,12 +32,12 @@ function ArticleManagement() {
       const token = localStorage.getItem('accessToken');
       // Add 1 second delay
       await new Promise(resolve => setTimeout(resolve, 1000));
-      const response = await axios.get(`${API_URL}/api/articles${viewAllArticles ? '?viewAll=true' : ''}`, {
+      const response = await api.get(`${API_URL}/api/articles${viewAllArticles ? '?viewAll=true' : ''}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
-      
+      console.log('API Response (viewAllArticles:', viewAllArticles, '):', response.data);
       if (response.data.status === 'success') {
         setArticles(response.data.data);
       } else {
@@ -57,7 +57,7 @@ function ArticleManagement() {
     try {
       const token = localStorage.getItem('accessToken');
       if (e.target.value.trim()) {
-        const response = await axios.get(
+        const response = await api.get(
           `${API_URL}/api/articles/search?q=${e.target.value}${viewAllArticles ? '&viewAll=true' : ''}`,
           {
             headers: {
@@ -79,13 +79,17 @@ function ArticleManagement() {
 
   // Toggle view all articles
   const handleViewAllToggle = () => {
-    setViewAllArticles(!viewAllArticles);
+    setViewAllArticles(prev => {
+      const newValue = !prev;
+      console.log('ViewAllArticles toggled:', newValue);
+      return newValue;
+    });
   };
 
   // Fetch categories
   const fetchCategories = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/categories`);
+      const response = await api.get(`${API_URL}/api/categories`);
       if (response.data.status === 'success') {
         setCategories(response.data.data);
       }
@@ -96,9 +100,14 @@ function ArticleManagement() {
   };
 
   useEffect(() => {
+    console.log('useEffect triggered, viewAllArticles:', viewAllArticles);
     fetchArticles();
     fetchCategories();
-  }, [viewAllArticles]); // เพิ่ม viewAllArticles เป็น dependency
+  }, [viewAllArticles]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   // Filter articles
   const filteredArticles = articles.filter(article => {
@@ -133,7 +142,7 @@ function ArticleManagement() {
   const handleConfirmDelete = async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await axios.delete(`${API_URL}/api/articles/${selectedArticleId}`, {
+      const response = await api.delete(`${API_URL}/api/articles/${selectedArticleId}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -172,7 +181,7 @@ function ArticleManagement() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-12 mb-81 text-left min-h-screen sm:mt-20">
+    <div className="flex flex-col min-h-screen justify-center sm:justify-start max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8  sm:mt-20 mb-0 text-left">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -194,7 +203,7 @@ function ArticleManagement() {
           {user?.role === 'admin' && (
             <button
               onClick={handleViewAllToggle}
-              className="text-sm font-medium text-gray-600 hover:text-gray-900"
+              className="text-sm font-medium text-gray-600 hover:text-gray-900 cursor-pointer"
             >
               {viewAllArticles ? 'View My Articles' : 'View All Articles'}
             </button>
@@ -265,9 +274,10 @@ function ArticleManagement() {
           {currentItems.map((article) => (
             <div key={article.id} className="p-4 border-b border-gray-200">
               <div className="mb-2">
-                <Link to={`/posts/${article.slug}`} className="text-base font-medium text-gray-900 hover:text-blue-600">
+                <Link to={`/article/${article.slug}`} className="text-base font-medium text-gray-900 hover:text-blue-600">
                   {article.title}
                 </Link>
+                <div className="text-xs text-gray-500 mt-1">Author: {article.author_name || article.authorName || article.author?.username || article.Author?.username || '-'}</div>
               </div>
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
@@ -309,6 +319,9 @@ function ArticleManagement() {
                 TITLE
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                AUTHOR
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 CATEGORY
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -323,9 +336,14 @@ function ArticleManagement() {
             {currentItems.map((article) => (
               <tr key={article.id}>
                 <td className="px-6 py-4">
-                  <Link to={`/posts/${article.slug}`} className="text-sm text-gray-900 hover:text-blue-600">
+                  <Link to={`/article/${article.slug}`} className="text-sm text-gray-900 hover:text-blue-600">
                     {article.title}
                   </Link>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="text-sm text-gray-900">
+                    {article.author_name || article.authorName || article.author?.username || article.Author?.username || '-'}
+                  </div>
                 </td>
                 <td className="px-6 py-4">
                   <div className="text-sm text-gray-900">

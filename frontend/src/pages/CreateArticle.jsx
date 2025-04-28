@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import defaultThumbnail from '../assets/Img_box_light.png';
 import { IoChevronDownOutline } from "react-icons/io5";
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import api from '../services/api';
 import { toast } from 'react-hot-toast';
 
 
@@ -21,12 +21,14 @@ function CreateArticle() {
     thumbnailPreview: null,
     authorName: ''
   });
+  const [isSaving, setIsSaving] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const token = localStorage.getItem('accessToken');
-        const response = await axios.get(`${API_URL}/api/categories`, {
+        const response = await api.get(`${API_URL}/api/categories`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -80,6 +82,7 @@ function CreateArticle() {
   };
 
   const handleSaveAsDraft = async () => {
+    setIsSaving(true);
     try {
       const token = localStorage.getItem('accessToken');
       if (!token) {
@@ -117,7 +120,7 @@ function CreateArticle() {
         hasImage: !!formData.thumbnailImage
       });
 
-      const response = await axios.post(`${API_URL}/api/articles`, formDataToSend, {
+      const response = await api.post(`${API_URL}/api/articles`, formDataToSend, {
         headers: {
           'Authorization': `Bearer ${token}`
         },
@@ -138,10 +141,13 @@ function CreateArticle() {
       } else {
         toast.error(error.response?.data?.message || 'เกิดข้อผิดพลาดในการบันทึกบทความ');
       }
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handlePublish = async () => {
+    setIsPublishing(true);
     try {
       const token = localStorage.getItem('accessToken');
       if (!token) {
@@ -183,7 +189,7 @@ function CreateArticle() {
         hasImage: !!formData.thumbnailImage
       });
 
-      const response = await axios.post(`${API_URL}/api/articles`, formDataToSend, {
+      const response = await api.post(`${API_URL}/api/articles`, formDataToSend, {
         headers: {
           'Authorization': `Bearer ${token}`
         },
@@ -204,6 +210,8 @@ function CreateArticle() {
       } else {
         toast.error(error.response?.data?.message || 'เกิดข้อผิดพลาดในการเผยแพร่บทความ');
       }
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -225,15 +233,25 @@ function CreateArticle() {
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto order-2">
               <button
                 onClick={handleSaveAsDraft}
+                disabled={isSaving || isPublishing}
                 className="w-full sm:w-auto px-[40px] py-[12px] text-sm font-medium text-[#26231E] bg-white border border-gray-300 rounded-[999px] hover:bg-gray-50 sm:cursor-pointer sm:px-[40px]py-[12px]"
               >
-                Save as draft
+                {isSaving ? (
+                  <span>Saving...</span>
+                ) : (
+                  'Save as draft'
+                )}
               </button>
               <button
                 onClick={handlePublish}
+                disabled={isSaving || isPublishing}
                 className="w-full sm:w-auto px-[40px] py-[12px] text-sm font-medium text-white bg-[#26231E] rounded-[999px] hover:bg-gray-800 sm:cursor-pointer"
               >
-                Save and publish
+                {isPublishing ? (
+                  <span>Publishing...</span>
+                ) : (
+                  'Save and publish'
+                )}
               </button>
             </div>
           </div>

@@ -135,7 +135,8 @@ const ArticleSection = () => {
       }
 
       // Check if we have more posts to load
-      setHasMore(data.data.current_page < data.data.total_pages);
+      const pagination = data.data.pagination;
+      setHasMore(pagination.page < pagination.total_pages);
     } catch (err) {
       setError('Failed to load posts. Please try again later.');
       console.error('Error loading posts:', err);
@@ -180,7 +181,7 @@ const ArticleSection = () => {
   const extraCategories = categories.length > 6 ? categories.slice(6) : [];
 
   return (
-    <section className={cn("article-section", STYLES.layout.wrapper, "w-full bg-[#F8F7F6]")}>
+    <section className={cn("article-section", STYLES.layout.wrapper, "w-full bg-[#F8F7F6] mb-12")}>
       <div className={cn("article-container", `${STYLES.layout.container.mobile} ${STYLES.layout.container.desktop}`)}>
         <div className="article-content w-full px-4 md:px-6 lg:px-8">
           <h1 className={cn("article-title", STYLES.components.article.title)}>Latest articles</h1>
