@@ -6,9 +6,9 @@ const port = process.env.PORT || 4001;
 
 // Enable CORS for all routes
 app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type']
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type"]
 }));
 
 app.use(express.json());
@@ -46,11 +46,9 @@ app.post("/posts", (req, res) => {
 // Get a post by ID
 app.get("/posts/:id", (req, res) => {
   const post = posts.find(p => p.id === req.params.id);
-  
   if (!post) {
     return res.status(404).json({ error: "ไม่พบโพสต์ที่ต้องการ" });
   }
-
   res.json(post);
 });
 
@@ -58,43 +56,44 @@ app.get("/posts/:id", (req, res) => {
 app.put("/posts/:id", (req, res) => {
   const { title, content } = req.body;
   const postIndex = posts.findIndex(p => p.id === req.params.id);
-
   if (postIndex === -1) {
     return res.status(404).json({ error: "ไม่พบโพสต์ที่ต้องการแก้ไข" });
   }
-
   posts[postIndex] = {
     ...posts[postIndex],
     title: title || posts[postIndex].title,
     content: content || posts[postIndex].content,
     updatedAt: new Date().toISOString()
   };
-
   res.json(posts[postIndex]);
 });
 
 // Delete a post
 app.delete("/posts/:id", (req, res) => {
   const postIndex = posts.findIndex(p => p.id === req.params.id);
-
   if (postIndex === -1) {
     return res.status(404).json({ error: "ไม่พบโพสต์ที่ต้องการลบ" });
   }
-
   posts.splice(postIndex, 1);
   res.status(204).send();
 });
 
-if (process.env.NODE_ENV !== 'production') {
+// ────────────── Health Check Endpoint ──────────────
+// ตอบกลับสถานะ OK พร้อม timestamp
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "ok",
+    timestamp: new Date().toISOString()
+  });
+});
+// ──────────────────────────────────────────────────
+
+// ในโหมด non-production ให้รันเซิร์ฟเวอร์ปกติบน port
+if (process.env.NODE_ENV !== "production") {
   app.listen(port, () => {
-    console.log(`Server is running at ${port}`);
+    console.log(`Server is running at port ${port}`);
   });
 }
 
-// Health check endpoint
-app.get('/api/health', async (req, res) => {
-  // สมมติคุณไม่มี DB เช็ค ก็ return ok อย่างง่าย
-  res.json({ status: 'ok', timestamp: new Date() });
-});
-
-export default app; 
+// Export app เพื่อให้ Vercel หรือไฟล์อื่นนำไปห่อเป็น Serverless Function
+export default app;
