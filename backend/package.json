@@ -4,6 +4,9 @@
   "description": "Backend API for My Personal Blog",
   "type": "module",
   "main": "server.mjs",
+  "engines": {
+    "node": "18.x"
+  },
   "directories": {
     "doc": "docs"
   },
