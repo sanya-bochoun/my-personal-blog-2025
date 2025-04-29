@@ -2,15 +2,28 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/index.mjs",
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    },
+    {
+      "src": "backend/server.mjs",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
+      "src": "/api/(.*)",
+      "dest": "backend/server.mjs"
+    },
+    {
       "src": "/(.*)",
-      "dest": "api/index.mjs",
-      "methods": ["GET","POST","PUT","DELETE","OPTIONS"]
+      "dest": "frontend/dist/$1"
     }
-  ]
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }
