@@ -9,12 +9,19 @@
       "config": {
         "nodeVersion": "18.x"
       }
+    },
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "backend/server.mjs"
+      "dest": "/backend/server.mjs"
     },
     {
       "src": "^/assets/(.*)",
@@ -41,7 +48,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "/frontend/dist/index.html"
     }
   ],
   "env": {
