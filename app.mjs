@@ -91,4 +91,10 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
+// Health check endpoint
+app.get('/api/health', async (req, res) => {
+  // สมมติคุณไม่มี DB เช็ค ก็ return ok อย่างง่าย
+  res.json({ status: 'ok', timestamp: new Date() });
+});
+
 export default app; 
