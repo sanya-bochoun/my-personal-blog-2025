@@ -14,7 +14,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/backend/server.mjs"
+      "dest": "backend/server.mjs"
     },
     {
       "src": "/assets/(.*)",
@@ -37,7 +37,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/frontend/dist/index.html"
+      "dest": "frontend/dist/index.html"
     }
   ]
 }
