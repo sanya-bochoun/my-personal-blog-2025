@@ -7,14 +7,7 @@
       "src": "backend/server.mjs",
       "use": "@vercel/node",
       "config": {
-        "nodeVersion": "18.x"
-      }
-    },
-    {
-      "src": "frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
+        "runtime": "nodejs18.x"
       }
     }
   ],
@@ -24,34 +17,27 @@
       "dest": "/backend/server.mjs"
     },
     {
-      "src": "^/assets/(.*)",
-      "dest": "/assets/$1"
+      "src": "/assets/(.*)",
+      "dest": "/frontend/dist/assets/$1"
     },
     {
-      "src": "^/manifest.webmanifest",
-      "dest": "/manifest.webmanifest"
+      "src": "/manifest.webmanifest",
+      "dest": "/frontend/dist/manifest.webmanifest"
     },
     {
-      "src": "^/favicon.ico",
-      "dest": "/favicon.ico"
+      "src": "/sw.js",
+      "dest": "/frontend/dist/sw.js"
     },
     {
-      "src": "^/sw.js",
-      "dest": "/sw.js"
-    },
-    {
-      "src": "^/workbox-.*\\.js",
-      "dest": "/workbox-$1.js"
+      "src": "/workbox-(.+)\\.js",
+      "dest": "/frontend/dist/workbox-$1.js"
     },
     {
       "handle": "filesystem"
     },
     {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "/frontend/dist/index.html"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
