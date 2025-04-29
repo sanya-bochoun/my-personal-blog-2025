@@ -1,5 +1,12 @@
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://my-personal-blog-2025-v2-29qx17ikd-sanya-bochouns-projects.vercel.app/api'
+const API_BASE_URL = import.meta.env.PROD
+  ? 'https://my-personal-blog-2025-v2-c5jm456sb-sanya-bochouns-projects.vercel.app/api'
   : 'http://localhost:5000/api';
 
-export default API_BASE_URL; 
+export const config = {
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+};
+
+export default config; 

@@ -49,12 +49,10 @@ app.use(xss());
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production'
-    ? ['https://my-personal-blog-2025-airo.vercel.app']
-    : ['http://localhost:5173'],
-  credentials: true,
+  origin: ['http://localhost:5173', 'https://my-personal-blog-2025-v2-c5jm456sb-sanya-bochouns-projects.vercel.app'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 };
 
 app.use(cors(corsOptions));

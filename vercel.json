@@ -14,7 +14,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/backend/server.mjs"
+      "dest": "backend/server.mjs"
     },
     {
       "src": "^/assets/(.*)",
