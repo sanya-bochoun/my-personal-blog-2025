@@ -9,12 +9,11 @@
       }
     },
     {
-      "src": "frontend/package.json",
+      "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist",
-        "nodeVersion": "18.x",
-        "installCommand": "npm install --legacy-peer-deps"
+        "distDir": "frontend/dist",
+        "nodeVersion": "18.x"
       }
     }
   ],
