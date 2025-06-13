@@ -2,21 +2,28 @@
   "version": 2,
   "builds": [
     {
-      "src": "frontend/package.json",
-      "use": "@vercel/static-build",
+      "src": "backend/server.mjs",
+      "use": "@vercel/node",
       "config": {
-        "distDir": "dist"
+        "nodeVersion": "18.x"
       }
     },
     {
-      "src": "backend/server.mjs",
-      "use": "@vercel/node"
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "frontend/dist",
+        "nodeVersion": "18.x"
+      }
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "backend/server.mjs"
+    },
+    {
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
@@ -32,3 +39,5 @@
     }
   }
 }
+
+

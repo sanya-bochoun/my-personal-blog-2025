@@ -49,12 +49,10 @@ app.use(xss());
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production'
-    ? ['https://my-personal-blog-2025-airo.vercel.app']
-    : ['http://localhost:5173'],
-  credentials: true,
+  origin: ['http://localhost:5173', 'https://my-personal-blog-2025-v2-b03a5shxx-sanya-bochouns-projects.vercel.app'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 };
 
 app.use(cors(corsOptions));
@@ -105,6 +103,53 @@ app.get('/api/health', async (req, res) => {
       message: error.message
     });
   }
+});
+
+// Basic routes for testing
+app.get('/api', (req, res) => {
+  res.json({ message: 'API is running!' });
+});
+
+// Categories routes
+app.get('/api/categories', (req, res) => {
+  res.json([
+    { id: '1', name: 'Technology', slug: 'technology' },
+    { id: '2', name: 'Lifestyle', slug: 'lifestyle' },
+    { id: '3', name: 'Travel', slug: 'travel' }
+  ]);
+});
+
+// Posts routes
+app.get('/api/posts', (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 6;
+  
+  const posts = [
+    {
+      id: '1',
+      title: 'Getting Started with Web Development',
+      content: 'Learn the basics of web development...',
+      category: 'Technology',
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: '2',
+      title: 'Travel Tips for Digital Nomads',
+      content: 'Essential tips for working while traveling...',
+      category: 'Travel',
+      createdAt: new Date().toISOString()
+    }
+  ];
+
+  res.json({
+    posts,
+    pagination: {
+      page,
+      limit,
+      total: posts.length,
+      totalPages: Math.ceil(posts.length / limit)
+    }
+  });
 });
 
 // Global Error Handler
