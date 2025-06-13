@@ -2,12 +2,11 @@
   "name": "my-personal-blog-2025",
   "version": "1.0.0",
   "private": true,
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "vercel-build": "cd frontend && npm install && npm run build"
+  },
   "engines": {
     "node": "18.x"
-  },
-  "scripts": {
-    "start": "node backend/server.mjs",
-    "build": "cd frontend && npm install && npm run build",
-    "vercel-build": "cd frontend && npm install --legacy-peer-deps && npm run build"
   }
 }
