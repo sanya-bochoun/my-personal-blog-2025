@@ -5,16 +5,12 @@
       "src": "frontend/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist",
-        "nodeVersion": "22.x"
+        "distDir": "dist"
       }
     },
     {
       "src": "backend/server.mjs",
-      "use": "@vercel/node",
-      "config": {
-        "nodeVersion": "22.x"
-      }
+      "use": "@vercel/node"
     }
   ],
   "routes": [
