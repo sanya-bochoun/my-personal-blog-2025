@@ -1,23 +1,5 @@
 {
   "version": 2,
-  "functions": {
-    "backend/server.mjs": {
-      "runtime": "nodejs18.x"
-    }
-  },
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/backend/server.mjs"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/frontend/dist/$1"
-    }
-  ],
   "builds": [
     {
       "src": "frontend/package.json",
@@ -33,6 +15,19 @@
       "config": {
         "nodeVersion": "20.x"
       }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/backend/server.mjs"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/dist/$1"
     }
   ],
   "env": {
