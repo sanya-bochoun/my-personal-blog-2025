@@ -187,9 +187,13 @@ io.on('connection', (socket) => {
   });
 });
 
-// เริ่มต้น server
-server.listen(PORT, () => {
-  console.log(`✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨\n🌈 🚀 Server is running successfully! 🚀 🌈\n🔹 Environment: ${process.env.NODE_ENV}\n🔹 Port: ${PORT}\n🔹 Status: Online and ready!\n🔹 URLs: http://localhost:${PORT}\n🔹 API: http://localhost:${PORT}/api\n🔹 Health Check: http://localhost:${PORT}/api/health\n🔹 Time: ${new Date().toLocaleString()}\n🌟 Happy coding! 💻 ✨\n✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨`);
-});
+// เริ่มต้น server (สำหรับ local development)
+if (process.env.NODE_ENV !== 'production') {
+  server.listen(PORT, () => {
+    console.log(`✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨\n🌈 🚀 Server is running successfully! 🚀 🌈\n🔹 Environment: ${process.env.NODE_ENV}\n🔹 Port: ${PORT}\n🔹 Status: Online and ready!\n🔹 URLs: http://localhost:${PORT}\n🔹 API: http://localhost:${PORT}/api\n🔹 Health Check: http://localhost:${PORT}/api/health\n🔹 Time: ${new Date().toLocaleString()}\n🌟 Happy coding! 💻 ✨\n✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨`);
+  });
+}
 
+// Export สำหรับ Vercel
+export default app;
 export { io }; 
