@@ -23,10 +23,21 @@
       "src": "frontend/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist"
+        "distDir": "dist",
+        "nodeVersion": "20.x"
+      }
+    },
+    {
+      "src": "backend/server.mjs",
+      "use": "@vercel/node",
+      "config": {
+        "nodeVersion": "20.x"
       }
     }
-  ]
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }
 
 
