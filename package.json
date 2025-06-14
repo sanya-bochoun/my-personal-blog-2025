@@ -2,13 +2,7 @@
   "name": "my-personal-blog-2025",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
   "scripts": {
-    "build": "cd frontend && npm install && npm run build",
-    "vercel-build": "cd frontend && npm install && npm run build",
-    "start": "node backend/server.mjs"
-  },
-  "engines": {
-    "node": "20.x"
+    "build": "cd frontend && npm install && npm run build"
   }
 }
