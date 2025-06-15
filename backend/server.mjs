@@ -51,6 +51,7 @@ app.use(xss());
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production'
     ? [
+        'https://myblogspersonal.netlify.app',
         'https://cute-tulumba-db13d6.netlify.app',
         'https://my-personal-blog-2025-airo.vercel.app',
         process.env.FRONTEND_URL

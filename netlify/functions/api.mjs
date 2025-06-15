@@ -35,6 +35,7 @@ app.use(xss());
 // CORS configuration
 const corsOptions = {
   origin: [
+    'https://myblogspersonal.netlify.app',
     'https://cute-tulumba-db13d6.netlify.app',
     'http://localhost:5173',
     'http://localhost:3000'
