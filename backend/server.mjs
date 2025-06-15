@@ -50,8 +50,12 @@ app.use(xss());
 // CORS configuration
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production'
-    ? ['https://my-personal-blog-2025-airo.vercel.app']
-    : ['http://localhost:5173'],
+    ? [
+        'https://cute-tulumba-db13d6.netlify.app',
+        'https://my-personal-blog-2025-airo.vercel.app',
+        process.env.FRONTEND_URL
+      ].filter(Boolean)
+    : ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']

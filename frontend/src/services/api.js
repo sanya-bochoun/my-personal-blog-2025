@@ -1,10 +1,12 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:5000';
+// Use environment variable or fallback to localhost
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const api = axios.create({
   baseURL: BASE_URL,
   timeout: 10000,
+  withCredentials: true, // Enable cookies/credentials
 });
 
 // เพิ่ม interceptor สำหรับแนบ accessToken กับทุก request
@@ -66,6 +68,17 @@ export const fetchPosts = async ({ page = 1, limit = 6, category = '', keyword =
     return response.data;
   } catch (error) {
     console.error('Error fetching posts:', error);
+    throw error;
+  }
+};
+
+// Health check function
+export const checkApiHealth = async () => {
+  try {
+    const response = await api.get('/api/health');
+    return response.data;
+  } catch (error) {
+    console.error('API Health check failed:', error);
     throw error;
   }
 };
