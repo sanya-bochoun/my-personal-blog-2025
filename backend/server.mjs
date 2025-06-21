@@ -51,7 +51,7 @@ app.use(xss());
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production'
     ? ['https://my-personal-blog-2025-airo.vercel.app']
-    : ['http://localhost:5173'],
+    : ['http://localhost:5173', 'http://localhost:5174'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']

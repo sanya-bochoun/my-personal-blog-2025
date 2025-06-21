@@ -1,5 +1,5 @@
-const express = require('express');
-const cors = require('cors');
+import express from 'express';
+import cors from 'cors';
 
 const app = express();
 
@@ -36,4 +36,4 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // Export for Vercel
-module.exports = app; 
+export default app; 
